@@ -2,7 +2,7 @@ package unitTesting;
 
 import java.util.ArrayList;
 
-import luceneIndexingAndReading.SearchingFromLucene;
+import luceneIndexingAndReading.SearchFromLucene;
 
 public class TestIndexReading {
 	
@@ -10,7 +10,7 @@ public class TestIndexReading {
 	{
 		String indexPath = "./index";
 		
-		SearchingFromLucene searchingFromLucene = new SearchingFromLucene(indexPath);
+		SearchFromLucene searchingFromLucene = new SearchFromLucene(indexPath);
 		
 		System.out.println("NO OF REVIEWS: " + searchingFromLucene.getNumberOfReviews());
 		

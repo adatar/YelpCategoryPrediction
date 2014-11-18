@@ -21,12 +21,12 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
 
-public class SearchingFromLucene {
+public class SearchFromLucene {
 	
 	private IndexReader indexReader;
 	private IndexSearcher indexSearcher;
 	
-	public SearchingFromLucene(String indexPath) 
+	public SearchFromLucene(String indexPath) 
 	{
 		try {
 			
