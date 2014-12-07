@@ -16,37 +16,39 @@ public class ProcessReviewsWithBusiness {
 	BufferedReader businessFileReader;
 	IndexUsingLucene indexUsingLucene;
 	
-	public ProcessReviewsWithBusiness(String indexPath) {
+	public ProcessReviewsWithBusiness(String indexPath, String reviewFile, String businessFile) {
 		
 		indexUsingLucene = new IndexUsingLucene(indexPath);
+		this.openLocation(reviewFile, businessFile);
 	}
 	
-	private HashMap<String,String> parseReviewJson(String reviewJsonLine)
+	public void setIndexUsingLucene(IndexUsingLucene indexUsingLucene) {
+        this.indexUsingLucene = indexUsingLucene;
+    }
+
+	public void addPrediction(HashMap<String, String> predictionValuesMapPairs)
+	{
+	    this.indexUsingLucene.indexPrediction(predictionValuesMapPairs);
+	}
+	
+    protected HashMap<String,String> parseReviewJson(String reviewJsonLine)
 	{
 		JSONObject jsonObject = new JSONObject(reviewJsonLine);
 		
-		String reviewId = jsonObject.getString("review_id");
 		String businessId = jsonObject.getString("business_id");
-		String userId = jsonObject.getString("user_id");
-		double reviewStars = jsonObject.getInt("stars");
-		String date = jsonObject.getString("date");
 		String text = jsonObject.getString("text");
 		
 
 		HashMap<String,String> reviewFieldValuePairs = new HashMap<>();
 		
-		reviewFieldValuePairs.put("reviewId", reviewId);
 		reviewFieldValuePairs.put("businessId", businessId);
-		reviewFieldValuePairs.put("userId", userId);
-		reviewFieldValuePairs.put("reviewRating", new Double(reviewStars).toString());
-		reviewFieldValuePairs.put("date", date.toString());
 		reviewFieldValuePairs.put("text", text);
 		
 		return reviewFieldValuePairs;
 	}
 		
 	
-	private HashMap<String,String> parseBusinessJson(String businessJsonLine)
+	protected HashMap<String,String> parseBusinessJson(String businessJsonLine)
 	{
 		
 		JSONObject jsonObject = new JSONObject(businessJsonLine);
@@ -74,28 +76,12 @@ public class ProcessReviewsWithBusiness {
 		
 	}
 	
-	private String getBusinessId(HashMap<String, String> fieldValuePair)
+	protected String getBusinessId(HashMap<String, String> fieldValuePair)
 	{
 			return fieldValuePair.get("businessId");
 	}
 	
-	private void indexUsingLucene(HashMap<String, String> reviewFieldValueMap,
-			HashMap<String, String> businessFieldValueMap, boolean businessChanged) {
-		
-		reviewFieldValueMap.remove("businessId");
-		indexUsingLucene.indexBothFields(businessFieldValueMap, reviewFieldValueMap, businessChanged);
-		printWhatToParse(reviewFieldValueMap, businessFieldValueMap);
-		
-	}
 	
-	private void printWhatToParse(HashMap<String, String> reviewFieldValueMap,
-			HashMap<String, String> businessFieldValueMap){
-		
-		System.out.println(businessFieldValueMap.get("businessId") + "\t" + reviewFieldValueMap.get("userId"));
-		
-	}
-	
-
 	public void readLineAndParseJson() 
 	{
 		try
@@ -108,14 +94,14 @@ public class ProcessReviewsWithBusiness {
 			
 			String businessBusinessId = getBusinessId(businessFieldValueMap);
 			String reviewBusinessId = getBusinessId(reviewFieldValueMap);
-			boolean businessChanged = true;
+			
+			StringBuilder reviewText = new StringBuilder();
 			
 			while (reviewline != null && businessline != null) 
 			{
 				if(businessBusinessId.equals(reviewBusinessId))
 				{
-					indexUsingLucene(reviewFieldValueMap, businessFieldValueMap, businessChanged);
-					businessChanged = false;
+				    reviewText.append(reviewFieldValueMap.get("text") + " ");
 					
 					reviewline = reviewFileReader.readLine();
 					if(reviewline != null)
@@ -127,16 +113,20 @@ public class ProcessReviewsWithBusiness {
 				
 				else
 				{
+				    businessFieldValueMap.put("reviewText", reviewText.toString());
+				    indexUsingLucene.indexBusiness(businessFieldValueMap);
+				    
 					businessline = businessFileReader.readLine();
 					if(businessline != null)
 					{
 						businessFieldValueMap = parseBusinessJson(businessline);
 						businessBusinessId = getBusinessId(businessFieldValueMap);
-						businessChanged = true;
 					}
 				}			
 			}		
-			
+            businessFieldValueMap.put("reviewText", reviewText.toString());
+            indexUsingLucene.indexBusiness(businessFieldValueMap);
+
 			businessFileReader.close();
 			reviewFileReader.close();
 			indexUsingLucene.closeLuceneLocks();
