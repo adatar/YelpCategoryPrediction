@@ -2,12 +2,20 @@ package naiveBayesPrediction;
 
 import java.util.HashMap;
 
-public class BuildNaiveBayesModel {
+public class NaiveBayesModel {
 	
-	HashMap<String,Double> priors;
-	HashMap<String, HashMap<String, Double>> conditionals;
+	private HashMap<String,Double> priors;
+	private HashMap<String, HashMap<String, Double>> conditionals;
 	
-	BuildNaiveBayesModel()
+	public HashMap<String, Double> getPriors() {
+        return priors;
+    }
+
+    public HashMap<String, HashMap<String, Double>> getConditionals() {
+        return conditionals;
+    }
+
+    NaiveBayesModel()
 	{
 		
 		priors = new HashMap<>();
@@ -33,7 +41,7 @@ public class BuildNaiveBayesModel {
 	}
 	
 	
-	public void addConditional(String label, String word, Double probability)
+	public void addOrUpdateConditional(String label, String word, Double probability)
 	{
 		HashMap<String, Double> innerConditional = conditionals.get(label);
 		
@@ -51,7 +59,7 @@ public class BuildNaiveBayesModel {
 		
 	}
 	
-	public double getConditional(String label, String word, Double probability)
+	public double getConditional(String label, String word)
 	{
 		HashMap<String, Double> innerConditional = conditionals.get(label);
 		
