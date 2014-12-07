@@ -6,12 +6,11 @@ public class TestDataProcessingAndIndexing {
 
 	public static void main(String[] args) {
 		
-		String indexPath = "./index";
-		String businessFile = "/u/adatar/Z534/Yelp Dataset/yelp_business_17.json";
-		String reviewFile = "/u/adatar/Z534/Yelp Dataset/yelp_review_200.json";
+		String indexPath = "trainingIndex";
+		String businessFile = "data/yelp_train_business.json";
+		String reviewFile = "data/yelp_train_reviews.json";
 		
-		ProcessReviewsWithBusiness processReviewsWithBusiness = new ProcessReviewsWithBusiness(indexPath);
-		processReviewsWithBusiness.openLocation(reviewFile, businessFile);
+		ProcessReviewsWithBusiness processReviewsWithBusiness = new ProcessReviewsWithBusiness(indexPath, reviewFile, businessFile);
 		processReviewsWithBusiness.readLineAndParseJson();
 		
 	}

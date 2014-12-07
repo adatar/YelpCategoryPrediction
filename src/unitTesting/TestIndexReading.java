@@ -8,13 +8,11 @@ public class TestIndexReading {
 	
 	public static void main(String args[])
 	{
-		String indexPath = "./index";
+		String indexPath = "trainingIndex";
 		
 		SearchFromLucene searchingFromLucene = new SearchFromLucene(indexPath);
 		
-		System.out.println("NO OF REVIEWS: " + searchingFromLucene.getNumberOfReviews());
-		
-		System.out.println("NO OF BUSINESSES: " + searchingFromLucene.getAllBusinessIds().size());
+		System.out.println("NO OF BUSINESSES: " + searchingFromLucene.getTotalDocumentCount());
 		
 		System.out.println("NO OF BUSINESSES WHICH ARE RESTAURANT: " + searchingFromLucene.getCategoryCount("Restaurants")); //Should be 9
 		
@@ -24,7 +22,8 @@ public class TestIndexReading {
 		
 		System.out.println("Get Business Name: " +searchingFromLucene.getBusinessName("zOc8lbjViUZajbY7M0aUCQ"));
 		
-		//printAList(searchingFromLucene.getAllBusinessIds());
+		System.out.println("All categories: ");
+		printAList(searchingFromLucene.getAllCategories());
 		
 	}
 	
@@ -32,7 +31,7 @@ public class TestIndexReading {
 	{
 		for(String s : listObj)
 		{
-			System.out.println(s);
+			System.out.println("\t" + s);
 		}
 		System.out.println();
 	}

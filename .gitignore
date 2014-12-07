@@ -1,4 +1,7 @@
-/bin/
+bin/
 .DS_Store
 index/
 .classpath
+data/
+trainingIndex/
+testIndex/
