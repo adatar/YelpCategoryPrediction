@@ -21,9 +21,9 @@ public class TestPredictUsingNaiveBayesModel {
 
         PredictUsingNaiveBayes punb = new PredictUsingNaiveBayes(trainingIndexPath, testIndexPath, testReviewsFile, testBusinessFile);
         
-        System.out.println("\nPRIOR PROBABILITIES:");
-        
         int count = 0;
+        /*System.out.println("\nPRIOR PROBABILITIES:");
+        
         for(Map.Entry<String, Double> prior : punb.getNaiveBayesModel().getPriors().entrySet())
         {
             if(count > 100)
@@ -48,15 +48,16 @@ public class TestPredictUsingNaiveBayesModel {
                 System.out.println("\tPROBABILITY: " + termProbability.getValue() + "\n");
                 count++;
             }
-        }
+        }*/
 
         // Top 4 categories reported using Naive Bayes Model
         count = 0;
         punb.processAndPredictTest(4);
-        for(Document doc : punb.getTestData().getAllPredictions().values())
+        for(int docId : punb.getTestData().getAllPredictions())
         {
             if(count > 10)
                 break;
+            Document doc = punb.getTestData().getDocumentById(docId);
             String businessId = doc.get("businessId");
             double precision = Double.parseDouble(doc.get("precision"));
             double recall = Double.parseDouble(doc.get("recall"));

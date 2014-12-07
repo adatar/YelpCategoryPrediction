@@ -3,8 +3,6 @@ package luceneIndexingAndReading;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -15,13 +13,14 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
+
+import com.google.common.primitives.Ints;
 
 public class SearchFromLucene {
 	
@@ -66,9 +65,9 @@ public class SearchFromLucene {
 		return fieldVocabulary;		
 	}
 	
-    protected HashMap<Integer, Document> getAllDocumentsByTag(String tag)
+    protected int[] getAllDocumentsByTag(String tag)
     {
-        HashMap<Integer, Document> documents = new HashMap<Integer, Document>();
+        ArrayList<Integer> documents = new ArrayList<Integer>();
         for (int i = 0; i < this.indexReader.maxDoc(); i++) {
             Document doc;
             try {
@@ -76,14 +75,25 @@ public class SearchFromLucene {
                 boolean isBusiness = doc.getField("type").stringValue().equalsIgnoreCase(tag);
                 
                 if(isBusiness)
-                    documents.put(i, doc);
+                    documents.add(i);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        return documents;
+        return Ints.toArray(documents);
     }
 
+    public Document getDocumentById(int docId)
+    {
+        Document doc = null;
+        try {
+            doc = this.indexReader.document(docId);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return doc;
+    }
+    
 	public ArrayList<String> getAllBusinessIds()
 	{
 		return getVocabularyForField("businessId");
@@ -100,7 +110,7 @@ public class SearchFromLucene {
 		return getVocabularyForField("reviewText");
 	}
 
-	public HashMap<Integer, Document> getAllBusinessDocuments()
+	public int[] getAllBusinessDocuments()
 	{
 	    return this.getAllDocumentsByTag("business");
 	}
@@ -265,7 +275,8 @@ public class SearchFromLucene {
 	   
 	//----CAN INTEGRATE END------
 	
-	protected void finalize()
+	@Override
+    protected void finalize()
 	{
 		try {
 			

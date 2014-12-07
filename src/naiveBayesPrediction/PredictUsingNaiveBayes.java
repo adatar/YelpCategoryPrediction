@@ -86,6 +86,7 @@ public class PredictUsingNaiveBayes {
         List<Entry<String, Double>> list = new LinkedList<Entry<String, Double>>(unsortMap.entrySet());
      
         Collections.sort(list, new Comparator<Entry<String, Double>>() {
+            @Override
             public int compare(Entry<String, Double> o1, Entry<String, Double> o2) {
                 return o1.getValue().compareTo(o2.getValue());
             }
@@ -101,12 +102,11 @@ public class PredictUsingNaiveBayes {
     
 	public void processAndPredictTest(int k) throws IOException
 	{
-	    HashMap<Integer, Document> documents = this.testData.getAllBusinessDocuments();
+	    int[] docIds = this.testData.getAllBusinessDocuments();
 	    HashMap<String, Double> scores = new HashMap<String, Double>();
-	    for(Entry<Integer, Document> document : documents.entrySet()){
+	    for(int docId : docIds){
 	        
-	        int docId = document.getKey();
-	        Document doc = document.getValue();
+	        Document doc = this.testData.getDocumentById(docId);
 	        
 	        ArrayList<String> terms = this.testData.getReviewTermsForDocument(docId);
 	        
