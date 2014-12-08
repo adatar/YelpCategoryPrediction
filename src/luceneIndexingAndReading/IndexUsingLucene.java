@@ -25,21 +25,26 @@ public class IndexUsingLucene {
 	Analyzer analyzer;
 	IndexWriterConfig iwc;
 	IndexWriter writer;
+	String indexPath;
 	
 	public IndexUsingLucene(String indexPath) {
 		
-		analyzer = new StandardAnalyzer();
-		iwc = new IndexWriterConfig(Version.LUCENE_4_10_1, analyzer);
-		iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
-		try {
-			
-			dir = FSDirectory.open(new File(indexPath));
-			writer = new IndexWriter(dir, iwc);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	    this.indexPath = indexPath;
+	    this.initializeWriter();
+	}
 	
+	private void initializeWriter()
+	{
+        analyzer = new StandardAnalyzer();
+        iwc = new IndexWriterConfig(Version.LUCENE_4_10_1, analyzer);
+        iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+        try {
+            dir = FSDirectory.open(new File(this.indexPath));
+            writer = new IndexWriter(dir, iwc);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
 	
 	protected Document addArrayValuesTODocument(Document luceneDoc, String arrayAsString, String fieldName, boolean store)
@@ -90,7 +95,6 @@ public class IndexUsingLucene {
 	private void addDocumentToIndex(Document luceneDoc)
 	{
 		try {
-			
 			writer.addDocument(luceneDoc);
 		
 		} catch (IOException e) {
@@ -126,8 +130,8 @@ public class IndexUsingLucene {
         String recall = predictionFieldValuePairs.get("recall");
         
         if(businessId != null) luceneDoc.add(new StringField("businessId",businessId,Field.Store.YES));
-        if(precision != null) luceneDoc.add(new DoubleField("businessRating",Double.parseDouble(precision),Field.Store.YES));
-        if(recall != null) luceneDoc.add(new DoubleField("businessRating",Double.parseDouble(recall),Field.Store.YES));
+        if(precision != null) luceneDoc.add(new DoubleField("precision",Double.parseDouble(precision),Field.Store.YES));
+        if(recall != null) luceneDoc.add(new DoubleField("recall",Double.parseDouble(recall),Field.Store.YES));
         luceneDoc.add(new StringField("type","prediction",Field.Store.YES));
         
         luceneDoc = addArrayValuesTODocument(luceneDoc, predictedCategories,"predictedCategories", true);
@@ -144,6 +148,15 @@ public class IndexUsingLucene {
 	{
 	}
 	
+	public void commitLuceneIndex()
+	{
+	    try {
+	        this.writer.forceMerge(1);
+            this.writer.commit();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+	}
 	
 	public void closeLuceneLocks()
 	{

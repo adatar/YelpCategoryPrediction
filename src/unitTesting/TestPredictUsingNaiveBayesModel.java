@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import luceneIndexingAndReading.SearchTestDataFromLucene;
+
 import org.apache.lucene.document.Document;
 
 import naiveBayesPrediction.PredictUsingNaiveBayes;
@@ -22,7 +24,7 @@ public class TestPredictUsingNaiveBayesModel {
         PredictUsingNaiveBayes punb = new PredictUsingNaiveBayes(trainingIndexPath, testIndexPath, testReviewsFile, testBusinessFile);
         
         int count = 0;
-        /*System.out.println("\nPRIOR PROBABILITIES:");
+        System.out.println("\nPRIOR PROBABILITIES:");
         
         for(Map.Entry<String, Double> prior : punb.getNaiveBayesModel().getPriors().entrySet())
         {
@@ -48,20 +50,10 @@ public class TestPredictUsingNaiveBayesModel {
                 System.out.println("\tPROBABILITY: " + termProbability.getValue() + "\n");
                 count++;
             }
-        }*/
+        }
 
         // Top 4 categories reported using Naive Bayes Model
         count = 0;
         punb.processAndPredictTest(4);
-        for(int docId : punb.getTestData().getAllPredictions())
-        {
-            if(count > 10)
-                break;
-            Document doc = punb.getTestData().getDocumentById(docId);
-            String businessId = doc.get("businessId");
-            double precision = Double.parseDouble(doc.get("precision"));
-            double recall = Double.parseDouble(doc.get("recall"));
-            System.out.println("BUSINESS NAME : " + punb.getTestData().getBusinessName(businessId) + "\tPRECISION : " + precision + "\tRECALL : " + recall);
-        }
     }
 }

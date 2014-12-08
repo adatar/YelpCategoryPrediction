@@ -12,7 +12,7 @@ public class TestDataProcessingAndIndexing {
 		
 		ProcessReviewsWithBusiness processReviewsWithBusiness = new ProcessReviewsWithBusiness(indexPath, reviewFile, businessFile);
 		processReviewsWithBusiness.readLineAndParseJson();
-		
+//		processReviewsWithBusiness.closeLuceneLocks();
 	}
 
 }

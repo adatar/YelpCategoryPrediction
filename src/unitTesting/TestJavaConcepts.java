@@ -10,6 +10,7 @@ public class TestJavaConcepts {
 		
 		for(String s : testarr)
 			System.out.println(s.trim());
+		System.out.println(Math.log(0));
 
 	}
 

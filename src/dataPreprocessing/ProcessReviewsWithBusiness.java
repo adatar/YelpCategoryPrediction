@@ -31,6 +31,16 @@ public class ProcessReviewsWithBusiness {
 	    this.indexUsingLucene.indexPrediction(predictionValuesMapPairs);
 	}
 	
+	public void closeLuceneLocks()
+	{
+	    this.indexUsingLucene.closeLuceneLocks();
+	}
+	
+	public void commitLuceneIndex()
+	{
+	    this.indexUsingLucene.commitLuceneIndex();
+	}
+	
     protected HashMap<String,String> parseReviewJson(String reviewJsonLine)
 	{
 		JSONObject jsonObject = new JSONObject(reviewJsonLine);
@@ -129,8 +139,7 @@ public class ProcessReviewsWithBusiness {
 
 			businessFileReader.close();
 			reviewFileReader.close();
-			indexUsingLucene.closeLuceneLocks();
-			
+			this.commitLuceneIndex();
 		} catch (IOException e)
 		{
 			e.printStackTrace();

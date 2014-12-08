@@ -107,16 +107,17 @@ public class PredictUsingNaiveBayes {
 	    for(int docId : docIds){
 	        
 	        Document doc = this.testData.getDocumentById(docId);
-	        
 	        ArrayList<String> terms = this.testData.getReviewTermsForDocument(docId);
 	        
 	        for (String category : this.trainingData.getAllCategories())
 	        {
-	            double score = Math.log(this.naiveBayesModel.getPrior(category));
+	            double prior = this.naiveBayesModel.getPrior(category);
+	            double score = prior > 0 ? Math.log(prior) : 0.0;
 	            
 	            for(String term: terms)
 	            {
-	                score += Math.log(this.naiveBayesModel.getConditional(category, term));
+	                double conditional = this.naiveBayesModel.getConditional(category, term);
+	                score += conditional > 0 ? Math.log(conditional) : 0;
 	            }
 	            scores.put(category, score);
 	        }
@@ -148,6 +149,8 @@ public class PredictUsingNaiveBayes {
 	        
 	        this.processTestData.addPrediction(predictionValuesMapPairs);
 	    }
+	    this.processTestData.commitLuceneIndex();
+	    this.processTestData.closeLuceneLocks();
 	}
 	
 	private double getPrecision(List<String> businessCategories, List<String> predictedCategories)
@@ -183,7 +186,7 @@ public class PredictUsingNaiveBayes {
         StringBuilder sb = new StringBuilder();
         
         for(String value : values)
-            sb.append(value);
+            sb.append(value).append(",");
         
         return sb.toString();
     }
