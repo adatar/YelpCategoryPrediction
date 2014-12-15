@@ -8,7 +8,7 @@ public class TestIndexReading {
 	
 	public static void main(String args[])
 	{
-		String indexPath = "./index";
+		String indexPath = "index";
 		
 		SearchingFromLucene searchingFromLucene = new SearchingFromLucene(indexPath);
 		
@@ -25,7 +25,6 @@ public class TestIndexReading {
 		System.out.println("Get Business Name: " +searchingFromLucene.getBusinessName("zOc8lbjViUZajbY7M0aUCQ"));
 		
 		//printAList(searchingFromLucene.getAllBusinessIds());
-		
 	}
 	
 	public static void printAList(ArrayList<String> listObj)

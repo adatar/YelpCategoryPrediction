@@ -1,1 +1,6 @@
 /bin/
+index/
+outliers.txt
+data/
+.DS_Store
+

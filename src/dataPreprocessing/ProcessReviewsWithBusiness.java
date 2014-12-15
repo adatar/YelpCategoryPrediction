@@ -1,24 +1,29 @@
 package dataPreprocessing;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 import luceneIndexingAndReading.IndexUsingLucene;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import outliers.Outliers;
+
 public class ProcessReviewsWithBusiness {
 	
 	BufferedReader reviewFileReader;
 	BufferedReader businessFileReader;
+	Outliers outliers = new Outliers("outliers.txt");
 	IndexUsingLucene indexUsingLucene;
 	
-	public ProcessReviewsWithBusiness(String indexPath) {
-		
+	public ProcessReviewsWithBusiness(String indexPath, String reviewFile, String businessFile) {
 		indexUsingLucene = new IndexUsingLucene(indexPath);
+		this.openLocation(reviewFile, businessFile);
 	}
 	
 	private HashMap<String,String> parseReviewJson(String reviewJsonLine)
@@ -82,22 +87,12 @@ public class ProcessReviewsWithBusiness {
 	private void indexUsingLucene(HashMap<String, String> reviewFieldValueMap,
 			HashMap<String, String> businessFieldValueMap, boolean businessChanged) {
 		
-		reviewFieldValueMap.remove("businessId");
 		indexUsingLucene.indexBothFields(businessFieldValueMap, reviewFieldValueMap, businessChanged);
-		printWhatToParse(reviewFieldValueMap, businessFieldValueMap);
-		
 	}
 	
-	private void printWhatToParse(HashMap<String, String> reviewFieldValueMap,
-			HashMap<String, String> businessFieldValueMap){
-		
-		System.out.println(businessFieldValueMap.get("businessId") + "\t" + reviewFieldValueMap.get("userId"));
-		
-	}
-	
-
 	public void readLineAndParseJson() 
 	{
+	    int count = 0;
 		try
 		{
 			String businessline = businessFileReader.readLine();
@@ -114,6 +109,14 @@ public class ProcessReviewsWithBusiness {
 			{
 				if(businessBusinessId.equals(reviewBusinessId))
 				{
+				    String reviewText = reviewFieldValueMap.get("text");
+				    String reviewId = reviewFieldValueMap.get("reviewId");
+				    double businessRating = Double.parseDouble(businessFieldValueMap.get("businessRating"));
+				    
+				    if (this.outliers.isOutlier(reviewText, businessRating)){
+				        this.outliers.addOutlier(reviewId);
+				    }
+				    
 					indexUsingLucene(reviewFieldValueMap, businessFieldValueMap, businessChanged);
 					businessChanged = false;
 					
@@ -134,12 +137,15 @@ public class ProcessReviewsWithBusiness {
 						businessBusinessId = getBusinessId(businessFieldValueMap);
 						businessChanged = true;
 					}
-				}			
+				}
+				if (count++ % 50 == 0)
+				    System.out.println("Processed " + count + " lines");
 			}		
 			
 			businessFileReader.close();
 			reviewFileReader.close();
 			indexUsingLucene.closeLuceneLocks();
+			this.outliers.closeWriter();
 			
 		} catch (IOException e)
 		{
