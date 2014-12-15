@@ -1,8 +1,13 @@
 package dataPreprocessing;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 
 import luceneIndexingAndReading.IndexUsingLucene;
@@ -16,9 +21,10 @@ public class ProcessReviewsWithBusiness {
 	BufferedReader businessFileReader;
 	IndexUsingLucene indexUsingLucene;
 	
-	public ProcessReviewsWithBusiness(String indexPath) {
+	public ProcessReviewsWithBusiness(String indexPath, String reviewFile, String businessFile) {
 		
 		indexUsingLucene = new IndexUsingLucene(indexPath);
+		this.openLocation(reviewFile, businessFile);
 	}
 	
 	private HashMap<String,String> parseReviewJson(String reviewJsonLine)
@@ -100,6 +106,17 @@ public class ProcessReviewsWithBusiness {
 	{
 		try
 		{
+		    String restBusinessFile = "data/yelp_rest_business.json";
+		    String restReviewsFile = "data/yelp_rest_reviews.json";
+		    
+		    Path restBusinessPath = FileSystems.getDefault().getPath(restBusinessFile);
+		    Path restReviewsPath = FileSystems.getDefault().getPath(restReviewsFile);
+		    if (! Files.exists(restBusinessPath)) Files.createFile(restBusinessPath);
+		    if (! Files.exists(restReviewsPath)) Files.createFile(restReviewsPath);
+		    
+		    BufferedWriter restBusinessWriter = new BufferedWriter(new FileWriter(restBusinessFile));
+		    BufferedWriter restReviewsWriter = new BufferedWriter(new FileWriter(restReviewsFile));
+		    
 			String businessline = businessFileReader.readLine();
 			String reviewline = reviewFileReader.readLine();
 			
@@ -110,11 +127,16 @@ public class ProcessReviewsWithBusiness {
 			String reviewBusinessId = getBusinessId(reviewFieldValueMap);
 			boolean businessChanged = true;
 			
-			while (reviewline != null && businessline != null) 
+			while (reviewline != null && businessline != null)
 			{
 				if(businessBusinessId.equals(reviewBusinessId))
 				{
-					indexUsingLucene(reviewFieldValueMap, businessFieldValueMap, businessChanged);
+//					indexUsingLucene(reviewFieldValueMap, businessFieldValueMap, businessChanged);
+					if(businessFieldValueMap.get("categories").toLowerCase().contains("restaurant"))
+					{
+					    restReviewsWriter.write(reviewline + '\n');
+					}
+					    
 					businessChanged = false;
 					
 					reviewline = reviewFileReader.readLine();
@@ -127,6 +149,11 @@ public class ProcessReviewsWithBusiness {
 				
 				else
 				{
+                    if(businessFieldValueMap.get("categories").toLowerCase().contains("restaurant"))
+                    {
+                        restBusinessWriter.write(businessline + '\n');
+                    }
+                    
 					businessline = businessFileReader.readLine();
 					if(businessline != null)
 					{
@@ -140,6 +167,8 @@ public class ProcessReviewsWithBusiness {
 			businessFileReader.close();
 			reviewFileReader.close();
 			indexUsingLucene.closeLuceneLocks();
+			restBusinessWriter.close();
+			restReviewsWriter.close();
 			
 		} catch (IOException e)
 		{
