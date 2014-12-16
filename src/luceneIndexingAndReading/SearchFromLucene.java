@@ -153,13 +153,33 @@ public class SearchFromLucene {
 	public PriorityQueue<DS> getVocabWithFreqForReview()
 	{
 		
-		//TODO: THIS FUNCTION WORKS WITH SRI'S REVIEWTEXT IMPLEMENTATION BUT NOT MINE. WONDER WHY.
+		//HM<Term,Freq>>
+		HashMap<String, Integer> termWordCount = new HashMap<>();
 		
-		HashMap<String, Integer> wordCount = new HashMap<>();
+		//For TF
+		//TF(t) = (Number of times term t appears in a document) / (Total number of terms in the document).
+		
+		//HM<Term, HM<DocNO, Freq>>
+		HashMap<String, HashMap<Integer,Integer>> documentWordCOunt = new HashMap<>();
+		
+		//HM<DocNO, Length>>
+		HashMap<String, HashMap<Integer,Integer>> documentLength = new HashMap<>();
+		
+		
+		//FOR IDF
+		//IDF(t) = log_e(Total number of documents / Number of documents with term t in it). 
+		
+		int totalNoOfDocs = getTotalDocumentCount();
+		
+		//HM<Term,#Docs>
+		HashMap<String, Integer> termContainingDoumentCount = new HashMap<>();
+		
+		//TF-IDF = TF * IDF
+		
+		
 
 		for (int i = 0; i < this.indexReader.maxDoc(); i++) 
 		{
-			
 			try {
 				
 				Terms terms = indexReader.getTermVector(i, "reviewText");
@@ -169,21 +189,26 @@ public class SearchFromLucene {
 					TermsEnum termsEnum = terms.iterator(null);
 				    BytesRef term = null;
 				    
-				    while ((term = termsEnum.next()) != null) {
-				    	
+				    while ((term = termsEnum.next()) != null) 
+				    {
 				    	DocsEnum docsEnum = termsEnum.docs(null, null);
 				    	
-				    	@SuppressWarnings("unused")
+				    	HashMap<Integer,Integer> tempDocFreqMap = new HashMap<>();
+				    	
 						int docIdEnum;
 				        while ((docIdEnum = docsEnum.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) 
 				        {
 				          
-				          if(!wordCount.containsKey(term.utf8ToString()))
-				        	  wordCount.put(term.utf8ToString(), docsEnum.freq());
+				          if(!termWordCount.containsKey(term.utf8ToString()))
+				        	  termWordCount.put(term.utf8ToString(), docsEnum.freq());
 				          else
-				        	  wordCount.put(term.utf8ToString(), wordCount.get(term.utf8ToString()) + docsEnum.freq());
+				        	  termWordCount.put(term.utf8ToString(), termWordCount.get(term.utf8ToString()) + docsEnum.freq());
 
+				          tempDocFreqMap.put(docIdEnum, docsEnum.freq());
+				          
+				        
 				        }
+				        documentWordCOunt.put(term.utf8ToString(), tempDocFreqMap);
 				
 				    }
 
@@ -195,11 +220,13 @@ public class SearchFromLucene {
 				
 		}
 		
+		//Get doc length
+		
 		PriorityQueue<DS> fpq = new PriorityQueue<>();
 		
-		for(String word : wordCount.keySet())
+		for(String word : termWordCount.keySet())
 		{
-			int freq = wordCount.get(word);
+			int freq = termWordCount.get(word);
 			DS tds = new DS(word,freq);
 			fpq.add(tds);
 		}

@@ -32,7 +32,6 @@ public class TestIndexReading {
 			DS ds = fpq.poll();
 			System.out.println(ds.term + " " + ds.freq);
 		}
-		
 				
 		//Get all words in review
 		//ArrayList<String> al = searchingFromLucene.getAllWordsInReview();
