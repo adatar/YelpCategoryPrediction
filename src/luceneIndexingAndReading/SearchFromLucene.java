@@ -3,8 +3,12 @@ package luceneIndexingAndReading;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.PriorityQueue;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.MultiFields;
@@ -13,12 +17,15 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
+
+import unitTesting.DS;
 
 import com.google.common.primitives.Ints;
 
@@ -54,6 +61,7 @@ public class SearchFromLucene {
 		
 			while ((byteRef = iterator.next()) != null) 
 			{ 
+				
 					String term = byteRef.utf8ToString();
 					if(term != null && term.length() > 0) fieldVocabulary.add(term);
 			}
@@ -65,13 +73,16 @@ public class SearchFromLucene {
 		return fieldVocabulary;		
 	}
 	
+		
     protected int[] getAllDocumentsByTag(String tag)
     {
         ArrayList<Integer> documents = new ArrayList<Integer>();
+        
         for (int i = 0; i < this.indexReader.maxDoc(); i++) {
             Document doc;
             try {
                 doc = this.indexReader.document(i);
+                
                 boolean isBusiness = doc.getField("type").stringValue().equalsIgnoreCase(tag);
                 
                 if(isBusiness)
@@ -106,7 +117,6 @@ public class SearchFromLucene {
 	
 	public ArrayList<String> getAllWordsInReview()
 	{
-		
 		return getVocabularyForField("reviewText");
 	}
 
@@ -137,6 +147,74 @@ public class SearchFromLucene {
 	        e.printStackTrace();
 	    }
 	    return words;
+	}
+	
+	
+	public PriorityQueue<DS> getVocabWithFreqForReview()
+	{
+		
+		//TODO: THIS FUNCTION WORKS WITH SRI'S REVIEWTEXT IMPLEMENTATION BUT NOT MINE. WONDER WHY.
+		
+		HashMap<String, Integer> wordCount = new HashMap<>();
+
+		for (int i = 0; i < this.indexReader.maxDoc(); i++) 
+		{
+			
+			try {
+				
+				Terms terms = indexReader.getTermVector(i, "reviewText");
+				
+				if (terms != null && terms.size() > 0) {
+					
+					TermsEnum termsEnum = terms.iterator(null);
+				    BytesRef term = null;
+				    
+				    while ((term = termsEnum.next()) != null) {
+				    	
+				    	DocsEnum docsEnum = termsEnum.docs(null, null);
+				    	
+				    	@SuppressWarnings("unused")
+						int docIdEnum;
+				        while ((docIdEnum = docsEnum.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) 
+				        {
+				          
+				          if(!wordCount.containsKey(term.utf8ToString()))
+				        	  wordCount.put(term.utf8ToString(), docsEnum.freq());
+				          else
+				        	  wordCount.put(term.utf8ToString(), wordCount.get(term.utf8ToString()) + docsEnum.freq());
+
+				        }
+				
+				    }
+
+				}
+			
+			} catch (IOException e) {
+             e.printStackTrace();
+			}
+				
+		}
+		
+		PriorityQueue<DS> fpq = new PriorityQueue<>();
+		
+		for(String word : wordCount.keySet())
+		{
+			int freq = wordCount.get(word);
+			DS tds = new DS(word,freq);
+			fpq.add(tds);
+		}
+		
+		return fpq;	
+	}
+	
+	public void getTopCategories()
+	{
+		ArrayList<String> cat = getAllCategories();
+		
+		for(String c : cat)
+		{
+			System.out.println(c + "\t" + getCategoryCount(c));
+		}	
 	}
 	
 	//------------------------START PART - QUERYING---------------------------------
@@ -181,7 +259,7 @@ public class SearchFromLucene {
 		return docs.totalHits;
 	}
 		
-	//----CAN INTEGRATE START BOOLEAN QUERIES-------
+	//----CAN INTEGRATE BELOW METHODS -- START BOOLEAN QUERIES-------
 	
 	private Document getDocument(int docId)
 	{
@@ -271,6 +349,24 @@ public class SearchFromLucene {
 	   public ArrayList<String> getReviewTermsForDocument(int docId)
 	   {
 	       return this.getFieldTermsFromDocument(docId, "reviewText");
+	   }
+	   
+	   public ArrayList<String> getCategoriesForDocument(int docId)
+	   {
+		   //return this.getFieldTermsFromDocument(docId, "businessCategories");
+		   
+		   ArrayList<String> categoryList = new ArrayList<>();
+		   
+		   Document doc = this.getDocumentById(docId);
+		   for(String s: doc.getValues("businessCategories"))
+		   {
+			   categoryList.add(s);
+			   System.out.print(s + " ");
+		   }
+		   System.out.println();
+		   
+		   return categoryList;
+	    
 	   }
 	   
 	//----CAN INTEGRATE END------

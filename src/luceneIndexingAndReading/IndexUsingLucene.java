@@ -3,6 +3,7 @@ package luceneIndexingAndReading;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Random;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -11,6 +12,7 @@ import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
@@ -20,31 +22,62 @@ import org.apache.lucene.util.Version;
 
 public class IndexUsingLucene {
 	
-	
-	Directory dir;
 	Analyzer analyzer;
-	IndexWriterConfig iwc;
-	IndexWriter writer;
-	String indexPath;
 	
-	public IndexUsingLucene(String indexPath) {
+	Directory trainDir;
+	IndexWriterConfig trainIwc;
+	IndexWriter trainWriter;
+	
+	Directory testDir;
+	IndexWriterConfig testIwc;
+	IndexWriter testWriter;
+	
+	String trainIndexPath;
+	String testIndexPath;
+	
+	Random random;
+	double trainingSplit;
+	
+	public IndexUsingLucene(String trainIndexPath, String testIndexPath) {
 		
-	    this.indexPath = indexPath;
+		this.trainingSplit = 0.7;
+	    this.trainIndexPath = trainIndexPath;
+	    this.testIndexPath = testIndexPath;
+	    this.random = new Random();
 	    this.initializeWriter();
 	}
 	
 	private void initializeWriter()
 	{
         analyzer = new StandardAnalyzer();
-        iwc = new IndexWriterConfig(Version.LUCENE_4_10_1, analyzer);
-        iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+        
+        trainIwc = new IndexWriterConfig(Version.LUCENE_4_10_1, analyzer);
+        trainIwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+        
+        testIwc = new IndexWriterConfig(Version.LUCENE_4_10_1, analyzer);
+        testIwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+        
         try {
-            dir = FSDirectory.open(new File(this.indexPath));
-            writer = new IndexWriter(dir, iwc);
+            trainDir = FSDirectory.open(new File(this.trainIndexPath));
+            trainWriter = new IndexWriter(trainDir, trainIwc);
+            
+            testDir = FSDirectory.open(new File(this.testIndexPath));
+            testWriter = new IndexWriter(testDir, testIwc);
             
         } catch (IOException e) {
             e.printStackTrace();
         }
+	}
+	
+	private boolean isTraningExample()
+	{
+		double d = random.nextDouble();
+		
+		if(d < trainingSplit)
+			return true;
+		
+		return false;
+		
 	}
 	
 	protected Document addArrayValuesTODocument(Document luceneDoc, String arrayAsString, String fieldName, boolean store)
@@ -77,25 +110,33 @@ public class IndexUsingLucene {
 		if(businessId != null) luceneDoc.add(new StringField("businessId",businessId,Field.Store.YES));
 		
 		if(businessRating != null) luceneDoc.add(new DoubleField("businessRating",Double.parseDouble(businessRating),Field.Store.YES));
+		if(businessRating != null) luceneDoc.add(new DoubleField("businessRating",Double.parseDouble(businessRating),Field.Store.YES));
+		
+		//Original - Does not filter stop words.
+		//if(reviewText.length() > 0) luceneDoc.add(new TextField("reviewText",reviewText,Field.Store.YES));
+				
+		//Sri's approach - Does not filter stop words.
+		
 		FieldType reviewFieldType = new FieldType();
 		reviewFieldType.setIndexed(true);
 		reviewFieldType.setTokenized(true);
-		reviewFieldType.setStored(true);
+		reviewFieldType.setStored(false);
 		reviewFieldType.setStoreTermVectors(true);
-		Field reviewField = new Field("reviewText", reviewText, reviewFieldType);
+		Field reviewField = new Field("reviewText", reviewText, reviewFieldType); 
+		if(reviewText != null) luceneDoc.add(reviewField);if(reviewText != null) luceneDoc.add(reviewField); 
 		
-		if(reviewText != null) luceneDoc.add(reviewField);
 		luceneDoc.add(new StringField("type","business",Field.Store.YES));
-		
 		luceneDoc = addArrayValuesTODocument(luceneDoc, businessCategories,"businessCategories", true);
+		
 		return luceneDoc;
 
 	}
 	
-	private void addDocumentToIndex(Document luceneDoc)
+	private void addDocumentToIndex(Document luceneDoc, boolean isTraining)
 	{
 		try {
-			writer.addDocument(luceneDoc);
+			if(isTraining) trainWriter.addDocument(luceneDoc);
+			else testWriter.addDocument(luceneDoc);
 		
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -104,11 +145,16 @@ public class IndexUsingLucene {
 	
 	public void indexBusiness(HashMap<String,String> businessFieldValuePairs)
 	{
-		Document luceneDoc = new Document();
-		
-		luceneDoc = addBusinessFieldsToDocument(luceneDoc, businessFieldValuePairs);
-		
-		addDocumentToIndex(luceneDoc);
+		if(businessFieldValuePairs.containsKey("isRestaurant"))
+		{
+			
+			Document luceneDoc = new Document();
+			luceneDoc = addBusinessFieldsToDocument(luceneDoc, businessFieldValuePairs);
+			
+			boolean isTraining = isTraningExample();
+			
+			addDocumentToIndex(luceneDoc, isTraining);
+		}
 		
 	}
 
@@ -118,12 +164,13 @@ public class IndexUsingLucene {
         
         luceneDoc = addPredictionFieldsToDocument(luceneDoc, predictionFieldValuePairs);
         
-        addDocumentToIndex(luceneDoc);
+        addDocumentToIndex(luceneDoc,false);
         
     }
 	
 	private Document addPredictionFieldsToDocument(Document luceneDoc, HashMap<String, String> predictionFieldValuePairs) {
-        String businessId = predictionFieldValuePairs.get("businessId");
+        
+		String businessId = predictionFieldValuePairs.get("businessId");
         String predictedCategories = predictionFieldValuePairs.get("predictedCategories");
         String businessCategories = predictionFieldValuePairs.get("businessCategories");
         String precision = predictionFieldValuePairs.get("precision");
@@ -140,19 +187,15 @@ public class IndexUsingLucene {
         return luceneDoc;
     }
 
-    public void indexBusinessFields(HashMap<String, String> fieldValuePairs)
-	{
-	}
-	
-	public void indexReviewFields(HashMap<String, String> fieldValuePairs)
-	{
-	}
-	
 	public void commitLuceneIndex()
 	{
 	    try {
-	        this.writer.forceMerge(1);
-            this.writer.commit();
+	        this.trainWriter.forceMerge(1);
+            this.trainWriter.commit();
+            
+	        this.testWriter.forceMerge(1);
+            this.testWriter.commit();
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -162,8 +205,11 @@ public class IndexUsingLucene {
 	{
 		try {
 
-			writer.close();
-			dir.close();
+			trainWriter.close();
+			trainDir.close();
+			
+			testWriter.close();
+			testDir.close();
 		
 		} catch (IOException e) {
 			e.printStackTrace();

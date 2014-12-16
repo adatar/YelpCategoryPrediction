@@ -16,9 +16,9 @@ public class ProcessReviewsWithBusiness {
 	BufferedReader businessFileReader;
 	IndexUsingLucene indexUsingLucene;
 	
-	public ProcessReviewsWithBusiness(String indexPath, String reviewFile, String businessFile) {
+	public ProcessReviewsWithBusiness(String trainIndexPath, String testIndexPath, String reviewFile, String businessFile) {
 		
-		indexUsingLucene = new IndexUsingLucene(indexPath);
+		indexUsingLucene = new IndexUsingLucene(trainIndexPath, testIndexPath);
 		this.openLocation(reviewFile, businessFile);
 	}
 	
@@ -71,11 +71,17 @@ public class ProcessReviewsWithBusiness {
 		
 		String categories = "";
 		
-		for(int i = 0; i< categoriesArray.length(); i++)
+		for(int i = 0; i< categoriesArray.length() -1 ; i++)
 			categories = categories + categoriesArray.getString(i) + ", ";	
 		
-				
+		if(categoriesArray.length() > 0) categories = categories + categoriesArray.getString(categoriesArray.length()-1);
+		
+		
 		HashMap<String,String> businessFieldValuePairs = new HashMap<>();
+		
+		if(isRestaurant(categoriesArray))
+			businessFieldValuePairs.put("isRestaurant", "T");
+		
 		
 		businessFieldValuePairs.put("businessId", businessId);
 		businessFieldValuePairs.put("businessName", name);
@@ -107,13 +113,17 @@ public class ProcessReviewsWithBusiness {
 			
 			StringBuilder reviewText = new StringBuilder();
 			
-			while (reviewline != null && businessline != null) 
+			int business_count = 1;
+			while (reviewline != null && businessline != null && business_count < 500) 
 			{
+				System.out.println(business_count);
+				
+
 				if(businessBusinessId.equals(reviewBusinessId))
 				{
 				    reviewText.append(reviewFieldValueMap.get("text") + " ");
-					
 					reviewline = reviewFileReader.readLine();
+					
 					if(reviewline != null)
 					{
 						reviewFieldValueMap = parseReviewJson(reviewline);
@@ -125,14 +135,15 @@ public class ProcessReviewsWithBusiness {
 				{
 				    businessFieldValueMap.put("reviewText", reviewText.toString());
 				    indexUsingLucene.indexBusiness(businessFieldValueMap);
-				    
+				    business_count++;
 					businessline = businessFileReader.readLine();
 					if(businessline != null)
 					{
 						businessFieldValueMap = parseBusinessJson(businessline);
 						businessBusinessId = getBusinessId(businessFieldValueMap);
 					}
-				}			
+				}
+				
 			}		
             businessFieldValueMap.put("reviewText", reviewText.toString());
             indexUsingLucene.indexBusiness(businessFieldValueMap);
@@ -140,11 +151,71 @@ public class ProcessReviewsWithBusiness {
 			businessFileReader.close();
 			reviewFileReader.close();
 			this.commitLuceneIndex();
+			
 		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
 	
+	}
+
+	private boolean isRestaurant(JSONArray categoriesArray) {
+		
+		for(int i = 0; i< categoriesArray.length(); i++)
+		{
+			if(categoriesArray.getString(i).equals("Restaurants")) return true;
+					
+					/*
+					 * if(categoriesArray.getString(i).equals("Food")) return true;
+					if(categoriesArray.getString(i).equals("Bars")) return true;
+					if(categoriesArray.getString(i).equals("Sandwiches")) return true;
+					if(categoriesArray.getString(i).equals("Mexican")) return true;
+					if(categoriesArray.getString(i).equals("American (Traditional)")) return true;
+					if(categoriesArray.getString(i).equals("Pizza")) return true;
+					if(categoriesArray.getString(i).equals("Fast Food")) return true;
+					if(categoriesArray.getString(i).equals("American (New)")) return true;
+					if(categoriesArray.getString(i).equals("Italian")) return true;
+					if(categoriesArray.getString(i).equals("Burgers")) return true;
+					if(categoriesArray.getString(i).equals("Chinese")) return true;
+					if(categoriesArray.getString(i).equals("Bakeries")) return true;
+					if(categoriesArray.getString(i).equals("Coffee & Tea")) return true;
+					if(categoriesArray.getString(i).equals("Delis")) return true;
+					if(categoriesArray.getString(i).equals("Breakfast & Brunch")) return true;
+					if(categoriesArray.getString(i).equals("Specialty Food")) return true;
+					if(categoriesArray.getString(i).equals("Diners")) return true;
+					if(categoriesArray.getString(i).equals("Greek")) return true;
+					if(categoriesArray.getString(i).equals("Sports Bars")) return true;
+					if(categoriesArray.getString(i).equals("Wine & Spirits")) return true;
+					if(categoriesArray.getString(i).equals("Chicken Wings")) return true;
+					if(categoriesArray.getString(i).equals("Seafood")) return true;
+					if(categoriesArray.getString(i).equals("Buffets")) return true;
+					if(categoriesArray.getString(i).equals("Ice Cream & Frozen Yogurt")) return true;
+					if(categoriesArray.getString(i).equals("Mediterranean")) return true;
+					if(categoriesArray.getString(i).equals("Barbeque")) return true;
+					if(categoriesArray.getString(i).equals("Gay Bars")) return true;
+					if(categoriesArray.getString(i).equals("Steakhouses")) return true;
+					if(categoriesArray.getString(i).equals("French")) return true;
+					if(categoriesArray.getString(i).equals("Japanese")) return true;
+					if(categoriesArray.getString(i).equals("Wine Bars")) return true;
+					if(categoriesArray.getString(i).equals("Cafes")) return true;
+					if(categoriesArray.getString(i).equals("Cajun/Creole")) return true;
+					if(categoriesArray.getString(i).equals("Desserts")) return true;
+					if(categoriesArray.getString(i).equals("Ethnic Food")) return true;
+					if(categoriesArray.getString(i).equals("Indian")) return true;
+					if(categoriesArray.getString(i).equals("Pubs")) return true;
+					if(categoriesArray.getString(i).equals("Salad")) return true;
+					if(categoriesArray.getString(i).equals("Sushi Bars")) return true;
+					if(categoriesArray.getString(i).equals("Middle Eastern")) return true;
+					if(categoriesArray.getString(i).equals("Pakistani")) return true;
+					if(categoriesArray.getString(i).equals("Bagels")) return true;
+					if(categoriesArray.getString(i).equals("Bed & Breakfast")) return true;
+					if(categoriesArray.getString(i).equals("Fish & Chips")) return true;
+					if(categoriesArray.getString(i).equals("Lebanese")) return true;
+					if(categoriesArray.getString(i).equals("Thai")) return true;
+					if(categoriesArray.getString(i).equals("Vegetarian")) return true; */
+					
+		}
+		return false;
 	}
 
 	public void openLocation(String reviewFile, String businessFile)	

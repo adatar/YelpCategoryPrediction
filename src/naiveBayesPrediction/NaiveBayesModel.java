@@ -4,9 +4,35 @@ import java.util.HashMap;
 
 public class NaiveBayesModel {
 	
+	private String modelClassLabel;
 	private HashMap<String,Double> priors;
 	private HashMap<String, HashMap<String, Double>> conditionals;
 	
+	
+    NaiveBayesModel(String label)
+	{
+		this.modelClassLabel = label;
+		priors = new HashMap<>();
+		conditionals = new HashMap<>();
+		
+	}
+    
+    NaiveBayesModel()
+	{
+
+		priors = new HashMap<>();
+		conditionals = new HashMap<>();
+		
+	}
+	
+	public String getModelClassLabel() {
+		return modelClassLabel;
+	}
+
+	public void setModelClassLabel(String modelClassLabel) {
+		this.modelClassLabel = modelClassLabel;
+	}
+
 	public HashMap<String, Double> getPriors() {
         return priors;
     }
@@ -15,14 +41,6 @@ public class NaiveBayesModel {
         return conditionals;
     }
 
-    NaiveBayesModel()
-	{
-		
-		priors = new HashMap<>();
-		conditionals = new HashMap<>();
-		
-	}
-	
 	public void addPrior(String label, Double probability)
 	{
 		if(!priors.containsKey(label))

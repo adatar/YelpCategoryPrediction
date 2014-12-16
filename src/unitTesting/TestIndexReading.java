@@ -1,17 +1,15 @@
 package unitTesting;
 
 import java.util.ArrayList;
-
-import org.apache.lucene.document.Document;
-
+import java.util.PriorityQueue;
 import luceneIndexingAndReading.SearchFromLucene;
-import luceneIndexingAndReading.SearchTestDataFromLucene;
+
 
 public class TestIndexReading {
 	
 	public static void main(String args[])
 	{
-		String indexPath = "trainingIndex";
+		String indexPath = "/u/adatar/Z534/index/train";
 		
 		SearchFromLucene searchingFromLucene = new SearchFromLucene(indexPath);
 		
@@ -24,33 +22,32 @@ public class TestIndexReading {
 		System.out.println("Suck in review and category: " +searchingFromLucene.getWordCountForGivenCategoryAndWord("suck","Mass Media"));
 		
 		System.out.println("Get Business Name: " +searchingFromLucene.getBusinessName("zOc8lbjViUZajbY7M0aUCQ"));
-
-		for(int docId : searchingFromLucene.getAllBusinessDocuments()){
-		    System.out.println(searchingFromLucene.getDocumentById(docId));
+		
+		
+		//Get word with frequency
+		PriorityQueue<DS> fpq = searchingFromLucene.getVocabWithFreqForReview();
+		
+		while(!fpq.isEmpty())
+		{
+			DS ds = fpq.poll();
+			System.out.println(ds.term + " " + ds.freq);
 		}
-		System.out.println("All categories: ");
-		printAList(searchingFromLucene.getAllCategories());
-	
-		System.out.println("\nPREDICTION FOR TEST BUSINESSES:\n");
-		int count = 0;
-		String testIndexPath = "testIndex";
-        SearchTestDataFromLucene searchTestData = new SearchTestDataFromLucene(testIndexPath);
-        for(int docId : searchTestData.getAllPredictions())
-        {
-            if(count > 10)
-                break;
-            Document doc = searchTestData.getDocumentById(docId);
-            String businessId = doc.get("businessId");
-            double precision = Double.parseDouble(doc.get("precision"));
-            double recall = Double.parseDouble(doc.get("recall"));
-            String predictedCategories = doc.get("predictedCategories");
-            String businessCategories = doc.get("businessCategories");
-            System.out.println("BUSINESS NAME : " + searchTestData.getBusinessName(businessId)
-            + "\tPREDICTED: (" + predictedCategories + ")\tACTUAL : (" + businessCategories + ")\tPRECISION : " + precision + "\tRECALL : " + recall);
-        }
+		
+				
+		//Get all words in review
+		//ArrayList<String> al = searchingFromLucene.getAllWordsInReview();
+		
+		//for(String s : al)
+			//System.out.println(s);
 
+
+		//System.out.println("All categories: ");
+		//printAList(searchingFromLucene.getAllCategories());
+		//searchingFromLucene.getTopCategories();
+		
 	}
 	
+			
 	public static void printAList(ArrayList<String> listObj)
 	{
 		for(String s : listObj)

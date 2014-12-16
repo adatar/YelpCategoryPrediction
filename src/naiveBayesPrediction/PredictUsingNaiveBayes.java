@@ -1,87 +1,174 @@
 package naiveBayesPrediction;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.index.DocsEnum;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.util.BytesRef;
-
-import dataPreprocessing.ProcessReviewsWithBusiness;
 import luceneIndexingAndReading.SearchFromLucene;
-import luceneIndexingAndReading.SearchTestDataFromLucene;
 
 public class PredictUsingNaiveBayes {
 	
-	private NaiveBayesModel naiveBayesModel;
-	private SearchFromLucene trainingData;
-	private SearchTestDataFromLucene testData;
-	private ProcessReviewsWithBusiness processTestData;
+	private HashMap<String, NaiveBayesModel> naiveBayesModelMap;
 	
-	public NaiveBayesModel getNaiveBayesModel() {
-        return naiveBayesModel;
-    }
-
+	private SearchFromLucene trainingData;
+	private SearchFromLucene testingData;
+	
+	private ArrayList<String> categories;
+	
     public SearchFromLucene getTrainingData() {
         return trainingData;
     }
 
-    public SearchTestDataFromLucene getTestData() {
-        return testData;
+    public SearchFromLucene getTestData() {
+        return testingData;
     }
 
     public PredictUsingNaiveBayes(String trainingIndexPath, String testIndexPath, String testReviewsFile, String testBusinessFile)
 	{
-		naiveBayesModel = new NaiveBayesModel();
+    	naiveBayesModelMap = new HashMap<String, NaiveBayesModel>();
+   	
         trainingData = new SearchFromLucene(trainingIndexPath);
+        testingData = new SearchFromLucene(testIndexPath);
         
-        this.processTestData = new ProcessReviewsWithBusiness(testIndexPath, testReviewsFile, testBusinessFile);
-        this.processTestData.readLineAndParseJson();
-        testData = new SearchTestDataFromLucene(testIndexPath);
-
+        this.categories = this.trainingData.getAllCategories();
+        
 		this.updatePriorsAndConditionals();
 	}
 
     private void updatePriorsAndConditionals()
 	{
 	    int totalBusinesses = this.trainingData.getTotalDocumentCount();
-	    for (String category : this.trainingData.getAllCategories())
+	    
+	    for (String category : categories)
 	    {
-	        double priorForCategory = this.trainingData.getCategoryCount(category) / (double)totalBusinesses;
-	        this.naiveBayesModel.addPrior(category, priorForCategory);
+
+	    	System.out.println("For Category: " + category);
+	    	
+	    	NaiveBayesModel naiveBayesModel = new NaiveBayesModel(category);
+	    	
+	    	int categoryCount = this.trainingData.getCategoryCount(category);
+	    	
+	        double priorForCategory = categoryCount / (double) totalBusinesses;
 	        
-	        int totalTermCategoryCounts = 0;
+	        naiveBayesModel.addPrior("POSITIVE", priorForCategory);
+	        naiveBayesModel.addPrior("NEGATIVE", 1 - priorForCategory);
 	        
+	        System.out.println("POSITIVE PRIOR: " + priorForCategory);
+	        System.out.println("NEGATIVE PRIOR: " + (1 - priorForCategory));
+	        System.out.println();
+	        
+	        for(String word : this.trainingData.getAllWordsInReview())
+	        {
+	        	int countForTermCategory = this.trainingData.getWordCountForGivenCategoryAndWord(word, category) + 1;
+	        	
+	        	double conditional = countForTermCategory / categoryCount;
+	            naiveBayesModel.addOrUpdateConditional("POSITIVE", word, conditional);
+	            naiveBayesModel.addOrUpdateConditional("NEGATIVE", word, 1 - conditional);
+	            
+		        //System.out.println("POSITIVE Cond: " + conditional);
+		        //System.out.println("NEGATIVE Cond: " + (1 - conditional));
+	        }
+	        
+	        	        
+	        /*
 	        for(String word : this.trainingData.getAllWordsInReview())
 	        {
 	            int countForTermCategory = this.trainingData.getWordCountForGivenCategoryAndWord(word, category) + 1;
 	            totalTermCategoryCounts += countForTermCategory;
-	            this.naiveBayesModel.addOrUpdateConditional(category, word, (double)countForTermCategory);
+	            naiveBayesModel.addOrUpdateConditional(category, word, (double)countForTermCategory);
 	        }
 	        
             for(String word : this.trainingData.getAllWordsInReview())
             {
                 double conditional = this.naiveBayesModel.getConditional(category, word);
-                this.naiveBayesModel.addOrUpdateConditional(category, word, conditional/totalTermCategoryCounts);
+                naiveBayesModel.addOrUpdateConditional(category, word, conditional/totalTermCategoryCounts);
             }
+            */
+	        
+            naiveBayesModelMap.put(category, naiveBayesModel);
 	    }
 	}
+    
+    public void predict()
+    {
+    	int[] docIds = this.testingData.getAllBusinessDocuments();
+    	System.out.println(docIds.length);
+    	
+    	for(int docId : docIds)
+    	{
+    		ArrayList<String> predictedLabels = new ArrayList<String>();
+    		ArrayList<String> terms = this.testingData.getReviewTermsForDocument(docId);
+    		
+    		Document doc = this.testingData.getDocumentById(docId);
+    		String businessId = doc.get("businessId");
+    		
 
+    		for(String category : categories)
+        	{
+    			NaiveBayesModel categoryModel = naiveBayesModelMap.get(category);
+    			
+	            double positivePrior = categoryModel.getPrior("POSITIVE");
+	            double negativePrior = categoryModel.getPrior("NEGATIVE");
+	            
+	            double positiveProbability = positivePrior;
+	            double negativeProbability = negativePrior;
+	            
+    			for(String term : terms)
+    			{
+    				double posConditional = categoryModel.getConditional("POSITIVE", term);
+    				double negConditional = 1 - posConditional; 
+    				
+    				positiveProbability *= posConditional;
+    				negativeProbability *= negConditional;
+    				
+    			}
+        		
+    			if(positiveProbability > negativeProbability)
+    				predictedLabels.add(category);
+        	}
+
+    		
+
+    		
+    		//TODO: Get actual labels for this business - does not get labels. Needs to change, low priority.
+    		ArrayList<String> actualCategories = this.testingData.getCategoriesForDocument(docId);
+    		
+    		printPrediction(predictedLabels, actualCategories, businessId);
+    		
+    		//Call functions getPrecision & getRecall
+    		
+    	}
+    	
+    }
+    
+    
+    private void printPrediction(ArrayList<String> predictions, ArrayList<String> actual, String businessId)
+    {
+    	System.out.println("BUSINESS_ID: " + businessId);
+    	System.out.print("PREDICTIONS: ");
+    	for(String category : predictions)
+    	{
+    		System.out.print(category + "\t");
+    	}
+    	
+    	System.out.println();
+    	System.out.print("ACTUAL: ");
+    	for(String category : actual)
+    	{
+    		System.out.print(category + "\t");
+    	}
+    	System.out.println();
+    	
+    }
+  
+    
+    
+    
+    
+    //-------------------------------------------------------------------------------------------------------------
+    //PREDICTION CODE - TO MODIFY
+    /*
     public static Map<String, Double> sortByValue(Map<String, Double> unsortMap) {   
         List<Entry<String, Double>> list = new LinkedList<Entry<String, Double>>(unsortMap.entrySet());
      
@@ -102,12 +189,12 @@ public class PredictUsingNaiveBayes {
     
 	public void processAndPredictTest(int k) throws IOException
 	{
-	    int[] docIds = this.testData.getAllBusinessDocuments();
+	    int[] docIds = this.testingData.getAllBusinessDocuments();
 	    HashMap<String, Double> scores = new HashMap<String, Double>();
 	    for(int docId : docIds){
 	        
-	        Document doc = this.testData.getDocumentById(docId);
-	        ArrayList<String> terms = this.testData.getReviewTermsForDocument(docId);
+	        Document doc = this.testingData.getDocumentById(docId);
+	        ArrayList<String> terms = this.testingData.getReviewTermsForDocument(docId);
 	        
 	        for (String category : this.trainingData.getAllCategories())
 	        {
@@ -152,6 +239,10 @@ public class PredictUsingNaiveBayes {
 	    this.processTestData.commitLuceneIndex();
 	    this.processTestData.closeLuceneLocks();
 	}
+	*/
+	
+	
+	//---PRECISION--AND--RECALL--USE--THIS--CODE \/
 	
 	private double getPrecision(List<String> businessCategories, List<String> predictedCategories)
 	{
