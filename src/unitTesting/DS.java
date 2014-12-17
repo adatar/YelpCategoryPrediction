@@ -3,8 +3,8 @@ package unitTesting;
 public class DS implements Comparable<DS>{
 	
 	
-	double TFIDFScore;
-	String term;
+	public double TFIDFScore;
+	public String term;
 	
 	public DS(String term, double TFIDFScore)
 	{

@@ -256,6 +256,7 @@ public class SearchFromLucene {
 		
 		for(String word : TFIDFScores.keySet())
 		{
+			//System.out.println(word + " " + TFIDFScores.get(word));
 			double score = TFIDFScores.get(word);
 			DS tds = new DS(word,score);
 			fpq.add(tds);
@@ -418,9 +419,9 @@ public class SearchFromLucene {
 		   for(String s: doc.getValues("businessCategories"))
 		   {
 			   categoryList.add(s);
-			   System.out.print(s + " ");
+			   //System.out.print(s + " ");
 		   }
-		   System.out.println();
+		   //System.out.println();
 		   
 		   return categoryList;
 	    

@@ -114,7 +114,7 @@ public class ProcessReviewsWithBusiness {
 			StringBuilder reviewText = new StringBuilder();
 			
 			int business_count = 1;
-			while (reviewline != null && businessline != null && business_count < 500) 
+			while (reviewline != null && businessline != null && business_count < 700) 
 			{
 
 				System.out.println(business_count);

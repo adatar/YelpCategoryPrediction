@@ -17,9 +17,9 @@ public class TestIndexReading {
 		
 		System.out.println("NO OF BUSINESSES WHICH ARE RESTAURANT: " + searchingFromLucene.getCategoryCount("Restaurants")); //Should be 9
 		
-		System.out.println("Suck in review: " +searchingFromLucene.getDocumentCountContainingWord("suck"));
+		System.out.println("Suck in review: " +searchingFromLucene.getDocumentCountContainingWord("cake"));
 		
-		System.out.println("Suck in review and category: " +searchingFromLucene.getWordCountForGivenCategoryAndWord("suck","Mass Media"));
+		System.out.println("Suck in review and category: " +searchingFromLucene.getWordCountForGivenCategoryAndWord("cake","American (Traditional)"));
 		
 		System.out.println("Get Business Name: " +searchingFromLucene.getBusinessName("zOc8lbjViUZajbY7M0aUCQ"));
 		

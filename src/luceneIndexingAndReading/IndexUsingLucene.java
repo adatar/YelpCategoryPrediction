@@ -176,8 +176,8 @@ public class IndexUsingLucene {
 	
 	public void indexBusiness(HashMap<String,String> businessFieldValuePairs)
 	{
-		if(businessFieldValuePairs.containsKey("isRestaurant"))
-		{
+		//if(businessFieldValuePairs.containsKey("isRestaurant"))
+		//{
 			
 			Document luceneDoc = new Document();
 			luceneDoc = addBusinessFieldsToDocument(luceneDoc, businessFieldValuePairs);
@@ -185,7 +185,7 @@ public class IndexUsingLucene {
 			boolean isTraining = isTraningExample();
 			
 			addDocumentToIndex(luceneDoc, isTraining);
-		}
+		//}
 		
 	}
 

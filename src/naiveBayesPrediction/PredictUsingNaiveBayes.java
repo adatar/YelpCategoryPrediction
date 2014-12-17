@@ -1,10 +1,16 @@
 package naiveBayesPrediction;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
+
 import org.apache.lucene.document.Document;
+
+import unitTesting.DS;
 import luceneIndexingAndReading.SearchFromLucene;
 
 public class PredictUsingNaiveBayes {
@@ -13,6 +19,7 @@ public class PredictUsingNaiveBayes {
 	
 	private SearchFromLucene trainingData;
 	private SearchFromLucene testingData;
+	private HashSet<String> highTFIDFWords = new HashSet<>();
 	
 	private ArrayList<String> categories;
 	
@@ -40,16 +47,27 @@ public class PredictUsingNaiveBayes {
 	{
 	    int totalBusinesses = this.trainingData.getTotalDocumentCount();
 	    
+	    PriorityQueue<DS> fpq = trainingData.getVocabWithFreqForReview();
+        int counter = 0;
+		while(!fpq.isEmpty() && counter < 600)
+		{
+			DS ds = fpq.poll();
+			highTFIDFWords.add(ds.term);
+			counter++;
+		}
+	    
 	    for (String category : categories)
 	    {
+	    	
 
 	    	System.out.println("For Category: " + category);
 	    	
 	    	NaiveBayesModel naiveBayesModel = new NaiveBayesModel(category);
 	    	
 	    	int categoryCount = this.trainingData.getCategoryCount(category);
+	    	System.out.println("Count " +categoryCount);
 	    	
-	        double priorForCategory = categoryCount / (double) totalBusinesses;
+	        double priorForCategory = (categoryCount + 1) / ((double) totalBusinesses + 2);
 	        
 	        naiveBayesModel.addPrior("POSITIVE", priorForCategory);
 	        naiveBayesModel.addPrior("NEGATIVE", 1 - priorForCategory);
@@ -58,37 +76,43 @@ public class PredictUsingNaiveBayes {
 	        System.out.println("NEGATIVE PRIOR: " + (1 - priorForCategory));
 	        System.out.println();
 	        
-	        for(String word : this.trainingData.getAllWordsInReview())
+	        for(String word : highTFIDFWords)
 	        {
 	        	int countForTermCategory = this.trainingData.getWordCountForGivenCategoryAndWord(word, category) + 1;
 	        	
-	        	double conditional = countForTermCategory / categoryCount;
+	        	double conditional = (double) countForTermCategory / (categoryCount + 2);
 	            naiveBayesModel.addOrUpdateConditional("POSITIVE", word, conditional);
 	            naiveBayesModel.addOrUpdateConditional("NEGATIVE", word, 1 - conditional);
 	            
-		        //System.out.println("POSITIVE Cond: " + conditional);
-		        //System.out.println("NEGATIVE Cond: " + (1 - conditional));
+	            if(category.contains("Indian") || category.contains("Delis"))
+		    		System.out.println("POSITIVE Cond: " + conditional + " " + countForTermCategory + " " + word);
+		      //  System.out.println("NEGATIVE Cond: " + (1 - conditional));
 	        }
-	        
 	        	        
-	        /*
-	        for(String word : this.trainingData.getAllWordsInReview())
-	        {
-	            int countForTermCategory = this.trainingData.getWordCountForGivenCategoryAndWord(word, category) + 1;
-	            totalTermCategoryCounts += countForTermCategory;
-	            naiveBayesModel.addOrUpdateConditional(category, word, (double)countForTermCategory);
-	        }
-	        
-            for(String word : this.trainingData.getAllWordsInReview())
-            {
-                double conditional = this.naiveBayesModel.getConditional(category, word);
-                naiveBayesModel.addOrUpdateConditional(category, word, conditional/totalTermCategoryCounts);
-            }
-            */
-	        
             naiveBayesModelMap.put(category, naiveBayesModel);
 	    }
 	}
+    
+    class PredictedCategory implements Comparable<PredictedCategory>	
+    {
+    	String category;
+    	double prior;
+    	
+    	public PredictedCategory(String category, double prior) {
+    		this.category = category;
+    		this.prior = prior;
+		}
+    	
+    	@Override
+    	public String toString(){
+    		return this.category + "-" + this.prior;
+    	}
+    	
+		@Override
+		public int compareTo(PredictedCategory o) {
+			return new Double(o.prior).compareTo(new Double(this.prior));
+		}
+    }
     
     public void predict()
     {
@@ -98,6 +122,8 @@ public class PredictUsingNaiveBayes {
     	for(int docId : docIds)
     	{
     		ArrayList<String> predictedLabels = new ArrayList<String>();
+    		ArrayList<PredictedCategory> predictedCategories = new ArrayList<PredictedCategory>();
+    		
     		ArrayList<String> terms = this.testingData.getReviewTermsForDocument(docId);
     		
     		Document doc = this.testingData.getDocumentById(docId);
@@ -116,25 +142,22 @@ public class PredictUsingNaiveBayes {
 	            
     			for(String term : terms)
     			{
+    				if(! this.highTFIDFWords.contains(term))
+    					continue;
     				double posConditional = categoryModel.getConditional("POSITIVE", term);
     				double negConditional = 1 - posConditional; 
     				
     				positiveProbability *= posConditional;
     				negativeProbability *= negConditional;
-    				
     			}
         		
     			if(positiveProbability > negativeProbability)
-    				predictedLabels.add(category);
+    				predictedCategories.add(new PredictedCategory(category, positiveProbability));
         	}
 
-    		
-
-    		
-    		//TODO: Get actual labels for this business - does not get labels. Needs to change, low priority.
     		ArrayList<String> actualCategories = this.testingData.getCategoriesForDocument(docId);
     		
-    		printPrediction(predictedLabels, actualCategories, businessId);
+    		printPrediction(predictedCategories, actualCategories, businessId);
     		
     		//Call functions getPrecision & getRecall
     		
@@ -143,11 +166,11 @@ public class PredictUsingNaiveBayes {
     }
     
     
-    private void printPrediction(ArrayList<String> predictions, ArrayList<String> actual, String businessId)
+    private void printPrediction(ArrayList<PredictedCategory> predictions, ArrayList<String> actual, String businessId)
     {
     	System.out.println("BUSINESS_ID: " + businessId);
     	System.out.print("PREDICTIONS: ");
-    	for(String category : predictions)
+    	for(PredictedCategory category : predictions)
     	{
     		System.out.print(category + "\t");
     	}
