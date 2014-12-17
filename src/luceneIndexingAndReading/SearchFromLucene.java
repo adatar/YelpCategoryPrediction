@@ -160,7 +160,7 @@ public class SearchFromLucene {
 		//TF(t) = (Number of times term t appears in a document) / (Total number of terms in the document).
 		
 		//HM<Term, HM<DocNO, Freq>>
-		HashMap<String, HashMap<Integer,Integer>> documentWordCOunt = new HashMap<>();
+		HashMap<String, HashMap<Integer,Integer>> termDocWordCount = new HashMap<>();
 		
 		//HM<DocNO, Length>>
 		HashMap<String, HashMap<Integer,Integer>> documentLength = new HashMap<>();
@@ -171,8 +171,9 @@ public class SearchFromLucene {
 		
 		int totalNoOfDocs = getTotalDocumentCount();
 		
-		//HM<Term,#Docs>
-		HashMap<String, Integer> termContainingDoumentCount = new HashMap<>();
+		// HM<Term,#Docs>
+		// HashMap<String, Integer> termContainingDoumentCount = new HashMap<>();
+		HashMap<String, Double> IDFScores = new HashMap<>();
 		
 		//TF-IDF = TF * IDF
 		
@@ -183,7 +184,7 @@ public class SearchFromLucene {
 			try {
 				
 				Terms terms = indexReader.getTermVector(i, "reviewText");
-				
+
 				if (terms != null && terms.size() > 0) {
 					
 					TermsEnum termsEnum = terms.iterator(null);
@@ -208,11 +209,15 @@ public class SearchFromLucene {
 				          
 				        
 				        }
-				        documentWordCOunt.put(term.utf8ToString(), tempDocFreqMap);
-				
+				        termDocWordCount.put(term.utf8ToString(), tempDocFreqMap);
+				        
+				        // Updating IDF scores
+				        if (!IDFScores.containsKey(term.utf8ToString()))
+				            IDFScores.put(term.utf8ToString(), (double)totalNoOfDocs / termsEnum.docFreq());
 				    }
 
 				}
+				
 			
 			} catch (IOException e) {
              e.printStackTrace();
@@ -220,14 +225,39 @@ public class SearchFromLucene {
 				
 		}
 		
+		HashMap<String, Double> TFIDFScores = new HashMap<>();
+		
+        for(String term : termDocWordCount.keySet())
+        {
+            double docLength = 0;
+            double TFIDFScore = 0;
+            
+            for(Integer docID : termDocWordCount.get(term).keySet())
+            {
+                for (String docTerm : termDocWordCount.keySet())
+                {
+                    if (termDocWordCount.get(docTerm).containsKey(docID))
+                        docLength += termDocWordCount.get(docTerm).get(docID);
+                }
+                
+                int termFreq = termDocWordCount.get(term).get(docID);
+                double TFScore = termFreq/docLength;
+                TFIDFScore += TFScore;
+            }
+            int numOfDocs = termDocWordCount.get(term).size();
+            double avgTFScore = TFIDFScore / numOfDocs;
+            
+            TFIDFScores.put(term, avgTFScore * IDFScores.get(term));
+        }
+		
 		//Get doc length
 		
 		PriorityQueue<DS> fpq = new PriorityQueue<>();
 		
-		for(String word : termWordCount.keySet())
+		for(String word : TFIDFScores.keySet())
 		{
-			int freq = termWordCount.get(word);
-			DS tds = new DS(word,freq);
+			double score = TFIDFScores.get(word);
+			DS tds = new DS(word,score);
 			fpq.add(tds);
 		}
 		

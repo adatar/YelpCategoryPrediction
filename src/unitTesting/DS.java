@@ -3,26 +3,21 @@ package unitTesting;
 public class DS implements Comparable<DS>{
 	
 	
-	int freq;
+	double TFIDFScore;
 	String term;
 	
-	public DS(String term, int freq)
+	public DS(String term, double TFIDFScore)
 	{
-		this.freq = freq;
+		this.TFIDFScore = TFIDFScore;
 		this.term = term;
 	}
 	
 	@Override
 	public int compareTo(DS o) {
-		if(this.freq < o.freq)
-			return 1;
-		
-		if(this.freq > o.freq)
-			return -1;
-		
-		return 0;
+	    Double oD = new Double(o.TFIDFScore);
+	    Double thisD = new Double(this.TFIDFScore);
+	    
+	    return oD.compareTo(thisD);
 	}
 	
-	
-
 }

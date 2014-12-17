@@ -30,7 +30,7 @@ public class TestIndexReading {
 		while(!fpq.isEmpty())
 		{
 			DS ds = fpq.poll();
-			System.out.println(ds.term + " " + ds.freq);
+			System.out.println(ds.term + " " + ds.TFIDFScore);
 		}
 				
 		//Get all words in review
