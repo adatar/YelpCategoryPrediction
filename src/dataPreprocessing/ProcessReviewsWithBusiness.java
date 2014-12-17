@@ -112,12 +112,12 @@ public class ProcessReviewsWithBusiness {
 			String reviewBusinessId = getBusinessId(reviewFieldValueMap);
 			
 			StringBuilder reviewText = new StringBuilder();
-			
+			System.out.println("Indexing..");
 			int business_count = 1;
-			while (reviewline != null && businessline != null && business_count < 700) 
+			while (reviewline != null && businessline != null && business_count < 7000) 
 			{
 
-				System.out.println(business_count);
+				//System.out.println(business_count);
 				
 				if(businessBusinessId.equals(reviewBusinessId))
 				{
@@ -147,6 +147,8 @@ public class ProcessReviewsWithBusiness {
 			}		
             businessFieldValueMap.put("reviewText", reviewText.toString());
             indexUsingLucene.indexBusiness(businessFieldValueMap);
+            
+            System.out.println("Indexing Complete..");
 
 			businessFileReader.close();
 			reviewFileReader.close();

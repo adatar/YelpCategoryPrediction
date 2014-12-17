@@ -146,8 +146,6 @@ public class IndexUsingLucene {
 		if(businessRating != null) luceneDoc.add(new DoubleField("businessRating",Double.parseDouble(businessRating),Field.Store.YES));
 		if(businessRating != null) luceneDoc.add(new DoubleField("businessRating",Double.parseDouble(businessRating),Field.Store.YES));
 		
-		//if(reviewText.length() > 0) luceneDoc.add(new TextField("reviewText",reviewText,Field.Store.YES));
-				
 		FieldType reviewFieldType = new FieldType();
 		reviewFieldType.setIndexed(true);
 		reviewFieldType.setTokenized(true);
@@ -176,8 +174,8 @@ public class IndexUsingLucene {
 	
 	public void indexBusiness(HashMap<String,String> businessFieldValuePairs)
 	{
-		//if(businessFieldValuePairs.containsKey("isRestaurant"))
-		//{
+		if(businessFieldValuePairs.containsKey("isRestaurant"))
+		{
 			
 			Document luceneDoc = new Document();
 			luceneDoc = addBusinessFieldsToDocument(luceneDoc, businessFieldValuePairs);
@@ -185,7 +183,7 @@ public class IndexUsingLucene {
 			boolean isTraining = isTraningExample();
 			
 			addDocumentToIndex(luceneDoc, isTraining);
-		//}
+		}
 		
 	}
 

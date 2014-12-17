@@ -153,32 +153,17 @@ public class SearchFromLucene {
 	public PriorityQueue<DS> getVocabWithFreqForReview()
 	{
 		
-		//HM<Term,Freq>>
 		HashMap<String, Integer> termWordCount = new HashMap<>();
 		
-		//For TF
-		//TF(t) = (Number of times term t appears in a document) / (Total number of terms in the document).
-		
-		//HM<Term, HM<DocNO, Freq>>
 		HashMap<String, HashMap<Integer,Integer>> termDocWordCount = new HashMap<>();
 		
-		//HM<DocNO, Length>>
 		HashMap<String, HashMap<Integer,Integer>> documentLength = new HashMap<>();
-		
-		
-		//FOR IDF
-		//IDF(t) = log_e(Total number of documents / Number of documents with term t in it). 
 		
 		int totalNoOfDocs = getTotalDocumentCount();
 		
-		// HM<Term,#Docs>
-		// HashMap<String, Integer> termContainingDoumentCount = new HashMap<>();
 		HashMap<String, Double> IDFScores = new HashMap<>();
 		
-		//TF-IDF = TF * IDF
 		
-		
-
 		for (int i = 0; i < this.indexReader.maxDoc(); i++) 
 		{
 			try {
@@ -211,7 +196,6 @@ public class SearchFromLucene {
 				        }
 				        termDocWordCount.put(term.utf8ToString(), tempDocFreqMap);
 				        
-				        // Updating IDF scores
 				        if (!IDFScores.containsKey(term.utf8ToString()))
 				            IDFScores.put(term.utf8ToString(), (double)totalNoOfDocs / termsEnum.docFreq());
 				    }
@@ -250,13 +234,11 @@ public class SearchFromLucene {
             TFIDFScores.put(term, avgTFScore * IDFScores.get(term));
         }
 		
-		//Get doc length
 		
 		PriorityQueue<DS> fpq = new PriorityQueue<>();
 		
 		for(String word : TFIDFScores.keySet())
 		{
-			//System.out.println(word + " " + TFIDFScores.get(word));
 			double score = TFIDFScores.get(word);
 			DS tds = new DS(word,score);
 			fpq.add(tds);
@@ -411,17 +393,13 @@ public class SearchFromLucene {
 	   
 	   public ArrayList<String> getCategoriesForDocument(int docId)
 	   {
-		   //return this.getFieldTermsFromDocument(docId, "businessCategories");
-		   
 		   ArrayList<String> categoryList = new ArrayList<>();
 		   
 		   Document doc = this.getDocumentById(docId);
 		   for(String s: doc.getValues("businessCategories"))
 		   {
 			   categoryList.add(s);
-			   //System.out.print(s + " ");
 		   }
-		   //System.out.println();
 		   
 		   return categoryList;
 	    

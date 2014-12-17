@@ -1,0 +1,14 @@
+README - Task 1
+-------------------------------
+
+TO INDEX:
+
+1. To Index open TestDataProcessingAndIndexing, and set appropriate paths.
+2. Compile all files.
+3. Run TestDataProcessingAndIndexing
+
+TO RUN AND PREDICT:
+
+1. To Index open TestPredictUsingNaiveBayesModel, and set appropriate paths.
+2. Run TestPredictUsingNaiveBayesModel
+
