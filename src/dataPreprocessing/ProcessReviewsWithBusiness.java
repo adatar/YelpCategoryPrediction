@@ -5,10 +5,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 
-import luceneIndexingAndReading.IndexUsingLucene;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import constants.Constants;
+import luceneAccess.IndexUsingLucene;
 
 public class ProcessReviewsWithBusiness {
 	
@@ -45,14 +46,14 @@ public class ProcessReviewsWithBusiness {
 	{
 		JSONObject jsonObject = new JSONObject(reviewJsonLine);
 		
-		String businessId = jsonObject.getString("business_id");
-		String text = jsonObject.getString("text");
+		String businessId = jsonObject.getString(Constants.BUSINESS_ID);
+		String text = jsonObject.getString(Constants.TEXT);
 		
 
 		HashMap<String,String> reviewFieldValuePairs = new HashMap<>();
 		
-		reviewFieldValuePairs.put("businessId", businessId);
-		reviewFieldValuePairs.put("text", text);
+		reviewFieldValuePairs.put(Constants.BUSINESS_ID, businessId);
+		reviewFieldValuePairs.put(Constants.TEXT, text);
 		
 		return reviewFieldValuePairs;
 	}
@@ -64,10 +65,10 @@ public class ProcessReviewsWithBusiness {
 		JSONObject jsonObject = new JSONObject(businessJsonLine);
 		
 		
-		String businessId = jsonObject.getString("business_id");
-		String name = jsonObject.getString("name");
-		double stars = jsonObject.getInt("stars");
-		JSONArray categoriesArray = jsonObject.getJSONArray("categories");
+		String businessId = jsonObject.getString(Constants.BUSINESS_ID);
+		String name = jsonObject.getString(Constants.NAME);
+		double stars = jsonObject.getInt(Constants.STARS);
+		JSONArray categoriesArray = jsonObject.getJSONArray(Constants.CATEGORIES);
 		
 		String categories = "";
 		
@@ -80,13 +81,13 @@ public class ProcessReviewsWithBusiness {
 		HashMap<String,String> businessFieldValuePairs = new HashMap<>();
 		
 		if(isRestaurant(categoriesArray))
-			businessFieldValuePairs.put("isRestaurant", "T");
+			businessFieldValuePairs.put(Constants.IS_RESTAURANT, Constants.TRUE);
 		
 		
-		businessFieldValuePairs.put("businessId", businessId);
-		businessFieldValuePairs.put("businessName", name);
-		businessFieldValuePairs.put("businessRating", new Double(stars).toString());
-		businessFieldValuePairs.put("categories", categories);
+		businessFieldValuePairs.put(Constants.BUSINESS_ID, businessId);
+		businessFieldValuePairs.put(Constants.BUSINESS_NAME, name);
+		businessFieldValuePairs.put(Constants.BUSINESS_RATING, new Double(stars).toString());
+		businessFieldValuePairs.put(Constants.CATEGORIES, categories);
 		
 		return businessFieldValuePairs;
 		
@@ -94,7 +95,7 @@ public class ProcessReviewsWithBusiness {
 	
 	protected String getBusinessId(HashMap<String, String> fieldValuePair)
 	{
-			return fieldValuePair.get("businessId");
+			return fieldValuePair.get(Constants.BUSINESS_ID);
 	}
 	
 	
@@ -116,12 +117,10 @@ public class ProcessReviewsWithBusiness {
 			int business_count = 1;
 			while (reviewline != null && businessline != null && business_count < 7000) 
 			{
-
-				//System.out.println(business_count);
 				
 				if(businessBusinessId.equals(reviewBusinessId))
 				{
-				    reviewText.append(reviewFieldValueMap.get("text") + " ");
+				    reviewText.append(reviewFieldValueMap.get(Constants.TEXT) + " ");
 					reviewline = reviewFileReader.readLine();
 					
 					if(reviewline != null)
@@ -133,7 +132,7 @@ public class ProcessReviewsWithBusiness {
 				
 				else
 				{
-				    businessFieldValueMap.put("reviewText", reviewText.toString());
+				    businessFieldValueMap.put(Constants.REVIEW_TEXT, reviewText.toString());
 				    indexUsingLucene.indexBusiness(businessFieldValueMap);
 				    business_count++;
 					businessline = businessFileReader.readLine();
@@ -145,7 +144,7 @@ public class ProcessReviewsWithBusiness {
 				}
 				
 			}		
-            businessFieldValueMap.put("reviewText", reviewText.toString());
+            businessFieldValueMap.put(Constants.REVIEW_TEXT, reviewText.toString());
             indexUsingLucene.indexBusiness(businessFieldValueMap);
             
             System.out.println("Indexing Complete..");
@@ -165,7 +164,7 @@ public class ProcessReviewsWithBusiness {
 		
 		for(int i = 0; i< categoriesArray.length(); i++)
 		{
-			if(categoriesArray.getString(i).equals("Restaurants")) return true;					
+			if(categoriesArray.getString(i).equals(Constants.RESTAURANTS)) return true;					
 		}
 		return false;
 	}

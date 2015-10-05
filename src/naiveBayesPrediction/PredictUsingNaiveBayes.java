@@ -7,10 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 
+import luceneAccess.SearchFromLucene;
+
 import org.apache.lucene.document.Document;
 
 import unitTesting.DS;
-import luceneIndexingAndReading.SearchFromLucene;
 
 public class PredictUsingNaiveBayes {
 	

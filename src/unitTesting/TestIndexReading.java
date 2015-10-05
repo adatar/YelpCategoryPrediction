@@ -2,7 +2,8 @@ package unitTesting;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
-import luceneIndexingAndReading.SearchFromLucene;
+
+import luceneAccess.SearchFromLucene;
 
 
 public class TestIndexReading {
