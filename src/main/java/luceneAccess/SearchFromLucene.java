@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
+import main.java.constants.Constants;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsEnum;
@@ -83,7 +85,7 @@ public class SearchFromLucene {
             try {
                 doc = this.indexReader.document(i);
                 
-                boolean isBusiness = doc.getField("type").stringValue().equalsIgnoreCase(tag);
+                boolean isBusiness = doc.getField(Constants.TYPE).stringValue().equalsIgnoreCase(tag);
                 
                 if(isBusiness)
                     documents.add(i);
@@ -107,22 +109,22 @@ public class SearchFromLucene {
     
 	public ArrayList<String> getAllBusinessIds()
 	{
-		return getVocabularyForField("businessId");
+		return getVocabularyForField(Constants.BUSINESS_ID);
 	}
 	
 	public ArrayList<String> getAllCategories()
 	{
-		return getVocabularyForField("businessCategories");
+		return getVocabularyForField(Constants.BUSINESS_CATEGORIES);
 	}
 	
 	public ArrayList<String> getAllWordsInReview()
 	{
-		return getVocabularyForField("reviewText");
+		return getVocabularyForField(Constants.REVIEW_TEXT);
 	}
 
 	public int[] getAllBusinessDocuments()
 	{
-	    return this.getAllDocumentsByTag("business");
+	    return this.getAllDocumentsByTag(Constants.BUSINESS);
 	}
 	
 	private ArrayList<String> getFieldTermsFromDocument(int docId, String field)
@@ -168,7 +170,7 @@ public class SearchFromLucene {
 		{
 			try {
 				
-				Terms terms = indexReader.getTermVector(i, "reviewText");
+				Terms terms = indexReader.getTermVector(i, Constants.REVIEW_TEXT);
 
 				if (terms != null && terms.size() > 0) {
 					
@@ -285,7 +287,7 @@ public class SearchFromLucene {
 	public int getDocumentCountContainingWord(String word)
 	{
 		
-		Query query = createFieldQuery("reviewText", word);
+		Query query = createFieldQuery(Constants.REVIEW_TEXT, word);
 		TopDocs docs = searchIndex(query, 1);
 		
 		return docs.totalHits;
@@ -293,7 +295,7 @@ public class SearchFromLucene {
 	
 	public int getNumberOfBusinesses()
 	{
-		Query query = createFieldQuery("type", "business");
+		Query query = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
 		TopDocs docs = searchIndex(query, 1);
 		
 		return docs.totalHits;
@@ -315,8 +317,8 @@ public class SearchFromLucene {
 		
 	public int getWordCountForGivenCategoryAndWord(String word, String category)
 	{
-		Query reviewQuery = createFieldQuery("reviewText", word);
-		Query categoryQuery = createFieldQuery("businessCategories", category);
+		Query reviewQuery = createFieldQuery(Constants.REVIEW_TEXT, word);
+		Query categoryQuery = createFieldQuery(Constants.BUSINESS_CATEGORIES, category);
 		
 		BooleanQuery booleanQuery = new BooleanQuery();
 		booleanQuery.add(reviewQuery, Occur.MUST);
@@ -330,8 +332,8 @@ public class SearchFromLucene {
 	
 	public int getCategoryCount(String category)
 	{	
-		Query typeQuery = createFieldQuery("type", "business");
-		Query categoryQuery = createFieldQuery("businessCategories", category);
+		Query typeQuery = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
+		Query categoryQuery = createFieldQuery(Constants.BUSINESS_CATEGORIES, category);
 		
 		BooleanQuery booleanQuery = new BooleanQuery();
 		booleanQuery.add(typeQuery, Occur.MUST);
@@ -346,8 +348,8 @@ public class SearchFromLucene {
 	public String getBusinessName(String businessId)
 	{
 		
-		Query typeQuery = createFieldQuery("type", "business");
-		Query businessQuery = createFieldQuery("businessId", businessId);
+		Query typeQuery = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
+		Query businessQuery = createFieldQuery(Constants.BUSINESS_ID, businessId);
 		
 		BooleanQuery booleanQuery = new BooleanQuery();
 		booleanQuery.add(typeQuery, Occur.MUST);
@@ -358,7 +360,7 @@ public class SearchFromLucene {
 		if(docs.scoreDocs.length > 0)
 		{
 			Document document = getDocument(docs.scoreDocs[0].doc);
-			IndexableField[] fields = document.getFields("businessName");
+			IndexableField[] fields = document.getFields(Constants.BUSINESS_NAME);
 			return fields[0].stringValue();	
 		}
 		
@@ -369,8 +371,8 @@ public class SearchFromLucene {
 	   public Document getBusinessDocument(String businessId)
 	    {
 	        
-	        Query typeQuery = createFieldQuery("type", "business");
-	        Query businessQuery = createFieldQuery("businessId", businessId);
+	        Query typeQuery = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
+	        Query businessQuery = createFieldQuery(Constants.BUSINESS_ID, businessId);
 	        
 	        BooleanQuery booleanQuery = new BooleanQuery();
 	        booleanQuery.add(typeQuery, Occur.MUST);
@@ -388,7 +390,7 @@ public class SearchFromLucene {
 
 	   public ArrayList<String> getReviewTermsForDocument(int docId)
 	   {
-	       return this.getFieldTermsFromDocument(docId, "reviewText");
+	       return this.getFieldTermsFromDocument(docId, Constants.REVIEW_TEXT);
 	   }
 	   
 	   public ArrayList<String> getCategoriesForDocument(int docId)
@@ -396,7 +398,7 @@ public class SearchFromLucene {
 		   ArrayList<String> categoryList = new ArrayList<>();
 		   
 		   Document doc = this.getDocumentById(docId);
-		   for(String s: doc.getValues("businessCategories"))
+		   for(String s: doc.getValues(Constants.BUSINESS_CATEGORIES))
 		   {
 			   categoryList.add(s);
 		   }
