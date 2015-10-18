@@ -54,7 +54,7 @@ public class SearchFromLucene {
 		ArrayList<String> fieldVocabulary = new ArrayList<String>();
 		
 		try {
-			Terms vocabulary = MultiFields.getTerms(indexReader,field);
+			Terms vocabulary = MultiFields.getTerms(indexReader, field);
 			
 			TermsEnum iterator = vocabulary.iterator(null); 
 			BytesRef byteRef = null; 
@@ -74,7 +74,7 @@ public class SearchFromLucene {
 	}
 	
 		
-    protected int[] getAllDocumentsByTag(String tag)
+    private int[] getAllDocumentsByTag(String tag)
     {
         ArrayList<Integer> documents = new ArrayList<Integer>();
         
@@ -299,7 +299,7 @@ public class SearchFromLucene {
 		return docs.totalHits;
 	}
 		
-	//----CAN INTEGRATE BELOW METHODS -- START BOOLEAN QUERIES-------
+	//TODO: ----CAN INTEGRATE BELOW METHODS -- START BOOLEAN QUERIES-------
 	
 	private Document getDocument(int docId)
 	{

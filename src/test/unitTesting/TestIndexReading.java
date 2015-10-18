@@ -10,7 +10,7 @@ public class TestIndexReading {
 	
 	public static void main(String args[])
 	{
-		String indexPath = "/u/adatar/Z534/index/train";
+		String indexPath = "/home/abhishek/Documents/YelpDataAndIndex/index/train";
 		
 		SearchFromLucene searchingFromLucene = new SearchFromLucene(indexPath);
 		
@@ -18,17 +18,17 @@ public class TestIndexReading {
 		
 		System.out.println("NO OF BUSINESSES WHICH ARE RESTAURANT: " + searchingFromLucene.getCategoryCount("Restaurants")); //Should be 9
 		
-		System.out.println("Suck in review: " +searchingFromLucene.getDocumentCountContainingWord("cake"));
+		System.out.println("cake in review: " +searchingFromLucene.getDocumentCountContainingWord("cake"));
 		
 		System.out.println("Suck in review and category: " +searchingFromLucene.getWordCountForGivenCategoryAndWord("cake","American (Traditional)"));
 		
 		System.out.println("Get Business Name: " +searchingFromLucene.getBusinessName("zOc8lbjViUZajbY7M0aUCQ"));
 		
-		
+
 		//Get word with frequency
 		PriorityQueue<DS> fpq = searchingFromLucene.getVocabWithFreqForReview();
-		
-		while(!fpq.isEmpty())
+		int i = 1;
+		while(!fpq.isEmpty() && i++ < 50)
 		{
 			DS ds = fpq.poll();
 			System.out.println(ds.term + " " + ds.TFIDFScore);
@@ -56,5 +56,6 @@ public class TestIndexReading {
 		}
 		System.out.println();
 	}
+	
 
 }

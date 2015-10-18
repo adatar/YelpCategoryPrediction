@@ -106,6 +106,8 @@ public class ProcessReviewsWithBusiness {
 			String businessline = businessFileReader.readLine();
 			String reviewline = reviewFileReader.readLine();
 			
+			System.out.println(businessline);
+			
 			HashMap<String, String> reviewFieldValueMap = parseReviewJson(reviewline);
 			HashMap<String, String> businessFieldValueMap = parseBusinessJson(businessline);
 			
@@ -115,7 +117,7 @@ public class ProcessReviewsWithBusiness {
 			StringBuilder reviewText = new StringBuilder();
 			System.out.println("Indexing..");
 			int business_count = 1;
-			while (reviewline != null && businessline != null && business_count < 7000) 
+			while (reviewline != null && businessline != null && business_count < 500) 
 			{
 				
 				if(businessBusinessId.equals(reviewBusinessId))

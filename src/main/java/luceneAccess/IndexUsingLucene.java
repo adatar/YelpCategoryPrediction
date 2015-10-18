@@ -49,6 +49,7 @@ public class IndexUsingLucene {
 	    this.trainIndexPath = trainIndexPath;
 	    this.testIndexPath = testIndexPath;
 	    this.random = new Random();
+	    
 	    initializeWriter();
 	}
 	
@@ -82,6 +83,20 @@ public class IndexUsingLucene {
 		CharArraySet stopSet = new CharArraySet(stopWords, true);
 		return stopSet;
 	}
+	
+	public void indexBusiness(HashMap<String,String> businessFieldValuePairs)
+	{
+		if(businessFieldValuePairs.containsKey(Constants.IS_RESTAURANT))
+		{
+			Document luceneDoc = new Document();
+			luceneDoc = addBusinessFieldsToDocument(luceneDoc, businessFieldValuePairs);
+			
+			boolean isTraining = isTraningExample();
+			
+			addDocumentToIndex(luceneDoc, isTraining);
+		}
+		
+	}
 
 	private boolean isTraningExample()
 	{
@@ -94,7 +109,7 @@ public class IndexUsingLucene {
 		
 	}
 	
-	protected Document addArrayValuesTODocument(Document luceneDoc, String arrayAsString, String fieldName, boolean store)
+	private Document addArrayValuesTODocument(Document luceneDoc, String arrayAsString, String fieldName, boolean store)
 	{
 		String categoryArray[] = arrayAsString.split(",");
 		
@@ -111,8 +126,8 @@ public class IndexUsingLucene {
 		return luceneDoc;
 	}
 	
-	
-	protected Document addBusinessFieldsToDocument(Document luceneDoc, HashMap<String,String> businessFieldValuePairs)
+	//TODO: Can merge addPredictionFieldsToDocument and addBusinessFieldsToDocument
+	private Document addBusinessFieldsToDocument(Document luceneDoc, HashMap<String,String> businessFieldValuePairs)
 	{
 		String businessName = businessFieldValuePairs.get(Constants.BUSINESS_NAME);
 		String businessId = businessFieldValuePairs.get(Constants.BUSINESS_ID);
@@ -150,20 +165,6 @@ public class IndexUsingLucene {
 			e.printStackTrace();
 		}	
 	}
-	
-	public void indexBusiness(HashMap<String,String> businessFieldValuePairs)
-	{
-		if(businessFieldValuePairs.containsKey(Constants.IS_RESTAURANT))
-		{
-			Document luceneDoc = new Document();
-			luceneDoc = addBusinessFieldsToDocument(luceneDoc, businessFieldValuePairs);
-			
-			boolean isTraining = isTraningExample();
-			
-			addDocumentToIndex(luceneDoc, isTraining);
-		}
-		
-	}
 
     public void indexPrediction(HashMap<String,String> predictionFieldValuePairs)
     {
@@ -172,7 +173,7 @@ public class IndexUsingLucene {
         addDocumentToIndex(luceneDoc,false);
         
     }
-	
+	//TODO: Can merge addPredictionFieldsToDocument and addBusinessFieldsToDocument
 	private Document addPredictionFieldsToDocument(Document luceneDoc, HashMap<String, String> predictionFieldValuePairs) {
         
 		String businessId = predictionFieldValuePairs.get(Constants.BUSINESS_ID);

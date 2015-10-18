@@ -5,7 +5,7 @@ public class Constants {
 	public static final Double TRAINING_SPLIT = 0.7;
 	
 	public static final String BUSINESS_NAME = "businessName";
-	public static final String BUSINESS_ID = "businessId";
+	public static final String BUSINESS_ID = "business_id";
 	public static final String CATEGORIES = "categories";
 	public static final String BUSINESS_CATEGORIES = "businessCategories";
 	public static final String BUSINESS_RATING = "businessRating";
