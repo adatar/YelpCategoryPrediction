@@ -1,15 +1,11 @@
 package main.java.luceneAccess;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
-
 import main.java.constants.Constants;
-
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
@@ -24,9 +20,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
-
 import test.unitTesting.DS;
 
 import com.google.common.primitives.Ints;
@@ -38,17 +32,34 @@ public class SearchFromLucene {
 	
 	public SearchFromLucene(String indexPath) 
 	{
-		try {
-			
-			indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
-			indexSearcher = new IndexSearcher(indexReader);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		indexReader = GetIndexReader.getIndexReader();
+		indexSearcher = new IndexSearcher(indexReader);
+	}
+	
+	public SearchFromLucene() 
+	{
+		indexReader = GetIndexReader.getIndexReader();
+		indexSearcher = new IndexSearcher(indexReader);			
 	}
 
 	//------------------------START PART - GET VOCABULARY-------------------------------------
+	
+	public TermsEnum getTermsEnumForField(String field){
+			
+		try {
+			Terms vocabulary = MultiFields.getTerms(indexReader, field);
+			
+			TermsEnum termsIterator = vocabulary.iterator(null); 
+			
+			return termsIterator;
+		
+		} catch (IOException e) {
+			e.printStackTrace();
+		} 
+		
+		return null;
+		
+	}
 	
 	private ArrayList<String> getVocabularyForField(String field)
 	{
@@ -151,6 +162,23 @@ public class SearchFromLucene {
 	    return words;
 	}
 	
+	private long getDocumentVocabSize(int docId, String field)
+	{
+		long size = 0;
+		
+	    try
+	    {
+	        Terms terms = this.indexReader.getTermVector(docId, field);
+	        size = terms.size();
+	        
+	    }
+	    catch(IOException e)
+	    {
+	        e.printStackTrace();
+	    }
+	    return size;
+	}
+	
 	
 	public PriorityQueue<DS> getVocabWithFreqForReview()
 	{
@@ -158,8 +186,6 @@ public class SearchFromLucene {
 		HashMap<String, Integer> termWordCount = new HashMap<>();
 		
 		HashMap<String, HashMap<Integer,Integer>> termDocWordCount = new HashMap<>();
-		
-		HashMap<String, HashMap<Integer,Integer>> documentLength = new HashMap<>();
 		
 		int totalNoOfDocs = getTotalDocumentCount();
 		
@@ -314,7 +340,8 @@ public class SearchFromLucene {
 		
 		return document;
 	}
-		
+	
+	//TODO: Can use single query with filter here TopDocs search(Query query, Filter filter, int n)
 	public int getWordCountForGivenCategoryAndWord(String word, String category)
 	{
 		Query reviewQuery = createFieldQuery(Constants.REVIEW_TEXT, word);
@@ -330,6 +357,7 @@ public class SearchFromLucene {
 		
 	}
 	
+	//TODO: Can use single query with filter here TopDocs search(Query query, Filter filter, int n)
 	public int getCategoryCount(String category)
 	{	
 		Query typeQuery = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
@@ -344,7 +372,7 @@ public class SearchFromLucene {
 		return docs.totalHits;
 	}
 	
-
+	//TODO: Can use single query with filter here TopDocs search(Query query, Filter filter, int n)
 	public String getBusinessName(String businessId)
 	{
 		
@@ -391,6 +419,11 @@ public class SearchFromLucene {
 	   public ArrayList<String> getReviewTermsForDocument(int docId)
 	   {
 	       return this.getFieldTermsFromDocument(docId, Constants.REVIEW_TEXT);
+	   }
+	   
+	   public long getReviewTextVocabSizeForDocument(int docId)
+	   {
+	       return this.getDocumentVocabSize(docId, Constants.REVIEW_TEXT);
 	   }
 	   
 	   public ArrayList<String> getCategoriesForDocument(int docId)
