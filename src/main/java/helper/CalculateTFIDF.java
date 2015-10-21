@@ -32,8 +32,8 @@ public class CalculateTFIDF {
 	
 	public PriorityQueue<TFIDFComparator> calculateTFIDFScore(){
 		
-		HashMap<String, HashMap<Integer, Double>> TFScoreMap = calculateTFScores();
 		HashMap<String, Double> IDFScoreMap = calculateIDFScores();
+		HashMap<String, HashMap<Integer, Double>> TFScoreMap = calculateTFScores();
 		
 		
 		for(String word : reviewVocabulary){
@@ -49,6 +49,7 @@ public class CalculateTFIDF {
 				
 			}
 			
+			System.out.println(word + "\t" + tfScore);
 			
 			TFIDFScoreMap.put(word, tfScore);
 			tfIdfQueue.add(new TFIDFComparator(word, tfScore));
@@ -59,13 +60,14 @@ public class CalculateTFIDF {
 	}
 	
 	private HashMap<String, HashMap<Integer, Double>> calculateTFScores(){
-		
+			
 		HashMap<String, HashMap<Integer, Double>> docTFMap = new HashMap<>();
 		
-		TermsEnum termsIiterator = searchFromLucene.getTermsEnumForField(Constants.REVIEW_TEXT); 
-		BytesRef byteRef = null; 
-		
 		try {
+			
+			TermsEnum termsIiterator = searchFromLucene.getTermsEnumForField(Constants.REVIEW_TEXT); 
+			BytesRef byteRef = null; 
+		
 			while ((byteRef = termsIiterator.next()) != null) 
 			{ 
 				String term = byteRef.utf8ToString();
@@ -78,18 +80,17 @@ public class CalculateTFIDF {
 				HashMap<Integer, Double> docFreqMap = new HashMap<>();
 				
 		        while ((docIdEnum = docsEnum.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) 
-		        {
+		        {	
 		        	int freq = docsEnum.freq();
 		        	long vocabSize = searchFromLucene.getReviewTextVocabSizeForDocument(docsEnum.docID());
 		        	
-		        	docFreqMap.put(docsEnum.docID(), (freq/vocabSize * 1.0));
+		        	docFreqMap.put(docsEnum.docID(), freq/(vocabSize * 1.0));
 		        }
 		        
 		        docTFMap.put(term, docFreqMap);
 			
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -104,7 +105,7 @@ public class CalculateTFIDF {
 		for(String word : reviewVocabulary){
 			
 			double termDocCount = searchFromLucene.getDocumentCountContainingWord(word) * 1.0;
-			double idfScore = Math.log(totalDocuments/termDocCount);
+			double idfScore = (totalDocuments/termDocCount);
 			
 			IDFScoreMap.put(word, idfScore);
 		}

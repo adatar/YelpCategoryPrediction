@@ -23,5 +23,8 @@ public class Constants {
 	public static final String TRUE = "T";
 	public static final String NAME = "name";
 	public static final String STARS = "stars";
+	
+	public static final String trainIndexPath = "/home/abhishek/Documents/YelpDataAndIndex/index/train";
+	public static final String testIndexPath = "/home/abhishek/Documents/YelpDataAndIndex/index/test";
 
 }

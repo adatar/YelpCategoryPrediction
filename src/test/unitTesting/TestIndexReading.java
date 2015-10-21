@@ -2,7 +2,8 @@ package test.unitTesting;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
-
+import main.java.helper.CalculateTFIDF;
+import main.java.helper.TFIDFComparator;
 import main.java.luceneAccess.SearchFromLucene;
 
 
@@ -24,7 +25,26 @@ public class TestIndexReading {
 		
 		System.out.println("Get Business Name: " +searchingFromLucene.getBusinessName("zOc8lbjViUZajbY7M0aUCQ"));
 		
-
+		
+		final long startTime = System.nanoTime();
+		
+		CalculateTFIDF c = new CalculateTFIDF();
+		
+		PriorityQueue<TFIDFComparator> fpq = c.calculateTFIDFScore();
+		//PriorityQueue<DS> fpq =  searchingFromLucene.getVocabWithFreqForReview();
+		int i = 1;
+		while(!fpq.isEmpty() && i++ < 50)
+		{
+			//DS ds = fpq.poll();
+			TFIDFComparator ds = fpq.poll();
+			System.out.println(ds.term + " " + ds.TFIDFScore);
+		}
+		
+		final long duration = System.nanoTime() - startTime;
+		System.out.println();
+		System.out.println(duration/1000000000);
+		
+		/*
 		//Get word with frequency
 		PriorityQueue<DS> fpq = searchingFromLucene.getVocabWithFreqForReview();
 		int i = 1;
@@ -33,6 +53,8 @@ public class TestIndexReading {
 			DS ds = fpq.poll();
 			System.out.println(ds.term + " " + ds.TFIDFScore);
 		}
+		
+		*/
 				
 		//Get all words in review
 		//ArrayList<String> al = searchingFromLucene.getAllWordsInReview();

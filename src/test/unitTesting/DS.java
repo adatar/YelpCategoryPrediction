@@ -17,7 +17,7 @@ public class DS implements Comparable<DS>{
 	    Double oD = new Double(o.TFIDFScore);
 	    Double thisD = new Double(this.TFIDFScore);
 	    
-	    return oD.compareTo(thisD);
+	    return thisD.compareTo(oD);
 	}
 	
 }
