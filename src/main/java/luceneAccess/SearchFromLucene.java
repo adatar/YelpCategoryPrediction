@@ -2,117 +2,80 @@ package main.java.luceneAccess;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.PriorityQueue;
+import java.util.Arrays;
+import java.util.List;
+
 import main.java.constants.Constants;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DocsEnum;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.BytesRef;
-import test.unitTesting.DS;
-
-import com.google.common.primitives.Ints;
 
 public class SearchFromLucene {
 	
-	private IndexReader indexReader;
-	private IndexSearcher indexSearcher;
-	
-	public SearchFromLucene(String indexPath){
-		
-		indexReader = GetIndexReader.getIndexReader();
-		indexSearcher = new IndexSearcher(indexReader);
-	}
+	private SearchFromLuceneHelper searchHelper;
 	
 	public SearchFromLucene(){
-		
-		indexReader = GetIndexReader.getIndexReader();
-		indexSearcher = new IndexSearcher(indexReader);			
+        searchHelper = new SearchFromLuceneHelper();
 	}
 	
-	public int getTotalDocumentCount()
-	{
-	    return indexReader.maxDoc();
-	}
-	
-	public ArrayList<String> getCategoriesForDocument(int docId){
-		
-		ArrayList<String> categoryList = new ArrayList<>();
-		   
-		Document doc = this.getDocumentById(docId);
-		for(String s: doc.getValues(Constants.BUSINESS_CATEGORIES))
-		{
-		   categoryList.add(s);
-		}
-		   
-		return categoryList;
+	public List<String> getCategoriesForDocument(int docId) {
+
+        Document doc = searchHelper.getDocumentById(docId);
+        return Arrays.asList(doc.getValues(Constants.BUSINESS_CATEGORIES));
 	}
 
-	public ArrayList<String> getAllBusinessIds(){
-		
+	public ArrayList<String> getAllBusinessIds() {
 		return getVocabularyForField(Constants.BUSINESS_ID);
 	}
 	
-	public ArrayList<String> getAllCategories(){
-		
+	public ArrayList<String> getAllCategories() {
 		return getVocabularyForField(Constants.BUSINESS_CATEGORIES);
 	}
 	
-	public ArrayList<String> getAllWordsInReview(){
-		
+	public ArrayList<String> getAllWordsInReview() {
 		return getVocabularyForField(Constants.REVIEW_TEXT);
 	}
 	
-	public int[] getAllBusinessDocuments(){
-		
-	    return getAllDocumentsByTag(Constants.BUSINESS);
+	public int[] getAllBusinessDocuments() {
+	    return searchHelper.getAllDocumentsByTag(Constants.BUSINESS);
 	}
 	
-	public ArrayList<String> getReviewTermsForDocument(int docId)
-	{
-		return getFieldTermsFromDocument(docId, Constants.REVIEW_TEXT);
+	public ArrayList<String> getReviewTermsForDocument(int docId) {
+		return searchHelper.getFieldTermsFromDocument(docId, Constants.REVIEW_TEXT);
 	}
 	
-	public long getReviewTextVocabSizeForDocument(int docId)
-	{
-		return getDocumentVocabSize(docId, Constants.REVIEW_TEXT);
+	public long getReviewTextVocabSizeForDocument(int docId) {
+		return searchHelper.getDocumentVocabSize(docId, Constants.REVIEW_TEXT);
 	}
 	
-	public void getTopCategories()
-	{
+	public void getTopCategories() {
 		ArrayList<String> cat = getAllCategories();
 		
-		for(String c : cat)
-		{
+		for(String c : cat) {
 			System.out.println(c + "\t" + getCategoryCount(c));
 		}	
 	}
 	
-	private ArrayList<String> getVocabularyForField(String field){
+	private ArrayList<String> getVocabularyForField(String field) {
 		
-		ArrayList<String> fieldVocabulary = new ArrayList<String>();
+		ArrayList<String> fieldVocabulary = new ArrayList<>();
 		
 		try {
 		
-			TermsEnum iterator = getTermsEnumForField(field);
-			BytesRef byteRef = null; 
+			TermsEnum iterator = searchHelper.getTermsEnumForField(field);
+			BytesRef byteRef;
 		
-			while ((byteRef = iterator.next()) != null) 
-			{ 
+			while ((byteRef = iterator.next()) != null) {
 				String term = byteRef.utf8ToString();
-				if(term != null && term.length() > 0) fieldVocabulary.add(term);
+				if(term.length() > 0) fieldVocabulary.add(term);
 			}
 			
 		} catch (IOException e) {
@@ -121,136 +84,28 @@ public class SearchFromLucene {
 				
 		return fieldVocabulary;		
 	}
-	
-	public TermsEnum getTermsEnumForField(String field) throws IOException{
-		
-		Terms vocabulary = MultiFields.getTerms(indexReader, field);
-		TermsEnum termsIterator = vocabulary.iterator(null); 
-			
-		return termsIterator;
-	}
-	
-    private int[] getAllDocumentsByTag(String tag)
-    {
-        ArrayList<Integer> documents = new ArrayList<Integer>();
-        
-        for (int i = 0; i < indexReader.maxDoc(); i++) {
-            Document doc;
-            try {
-                doc = indexReader.document(i);
-                
-                boolean isBusiness = doc.getField(Constants.TYPE).stringValue().equalsIgnoreCase(tag);
-                
-                if(isBusiness)
-                    documents.add(i);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return Ints.toArray(documents);
-    }
 
-    public Document getDocumentById(int docId)
-    {
-        Document doc = null;
-        try {
-            doc = indexReader.document(docId);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return doc;
-    }
-    	
-	private ArrayList<String> getFieldTermsFromDocument(int docId, String field)
-	{
-        ArrayList<String> words = new ArrayList<String>();
-	    try
-	    {
-	        Terms terms = indexReader.getTermVector(docId, field);
-	        if (terms != null && terms.size() > 0) {
-	            
-	            TermsEnum termsEnum = terms.iterator(null); // access the terms for this field
-	            BytesRef term = null;
-
-	            while ((term = termsEnum.next()) != null) { // explore the terms for this field
-	                words.add(term.utf8ToString());
-	            }
-	        }
-	        
-	    }
-	    catch(IOException e)
-	    {
-	        e.printStackTrace();
-	    }
-	    return words;
-	}
 	
-	private long getDocumentVocabSize(int docId, String field)
-	{
-		long size = 0;
-		
-	    try
-	    {
-	        Terms terms = this.indexReader.getTermVector(docId, field);
-	        size = terms.size();
-	        
-	    }
-	    catch(IOException e)
-	    {
-	        e.printStackTrace();
-	    }
-	    return size;
-	}
-	
-	public int getDocumentCountContainingWord(String word)
-	{
+	public int getDocumentCountContainingWord(String word) {
 		
 		Query query = createFieldQuery(Constants.REVIEW_TEXT, word);
-		TopDocs docs = searchIndex(query, 1);
+		TopDocs docs = searchHelper.queryIndex(query, 1);
 		
 		return docs.totalHits;
 	}
 	
-	public int getNumberOfBusinesses()
-	{
+	public int getNumberOfBusinesses() {
 		Query query = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
-		TopDocs docs = searchIndex(query, 1);
+		TopDocs docs = searchHelper.queryIndex(query, 1);
 		
 		return docs.totalHits;
 	}
 	
-	private Query createFieldQuery(String field, String term)
-	{
-			Query query = new TermQuery(new Term(field, term));			
-			return query;
+	private Query createFieldQuery(String field, String term) {
+            return new TermQuery(new Term(field, term));
 	}
 	
-	private TopDocs searchIndex(Query query, int numTopHits)
-	{
-		TopDocs docs = null;
-		
-		try {
-			docs = indexSearcher.search(query, numTopHits);
-		} catch (IOException e) {e.printStackTrace();}
-		
-		return docs;
-		
-	}
-	
-	private Document getDocument(int docId)
-	{
-		Document document = null;
-		try {
-			document = indexReader.document(docId);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		return document;
-	}
-	
-	public int getWordCountForGivenCategoryAndWord(String word, String category)
-	{
+	public int getWordCountForGivenCategoryAndWord(String word, String category) {
 		Query reviewQuery = createFieldQuery(Constants.REVIEW_TEXT, word);
 		Query categoryQuery = createFieldQuery(Constants.BUSINESS_CATEGORIES, category);
 		
@@ -258,13 +113,12 @@ public class SearchFromLucene {
 		booleanQuery.add(reviewQuery, Occur.MUST);
 		booleanQuery.add(categoryQuery, Occur.MUST);
 		
-		TopDocs docs = searchIndex(booleanQuery, 1);	
+		TopDocs docs = searchHelper.queryIndex(booleanQuery, 1);
 		return docs.totalHits;
 		
 	}
 	
-	public int getCategoryCount(String category)
-	{	
+	public int getCategoryCount(String category) {
 		Query typeQuery = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
 		Query categoryQuery = createFieldQuery(Constants.BUSINESS_CATEGORIES, category);
 		
@@ -272,12 +126,11 @@ public class SearchFromLucene {
 		booleanQuery.add(typeQuery, Occur.MUST);
 		booleanQuery.add(categoryQuery, Occur.MUST);
 		
-		TopDocs docs = searchIndex(booleanQuery, 1);
+		TopDocs docs = searchHelper.queryIndex(booleanQuery, 1);
 		return docs.totalHits;
 	}
 	
-	public String getBusinessName(String businessId)
-	{
+	public String getBusinessName(String businessId) {
 		
 		Query typeQuery = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
 		Query businessQuery = createFieldQuery(Constants.BUSINESS_ID, businessId);
@@ -286,21 +139,18 @@ public class SearchFromLucene {
 		booleanQuery.add(typeQuery, Occur.MUST);
 		booleanQuery.add(businessQuery, Occur.MUST);
 		
-		TopDocs docs = searchIndex(booleanQuery, 1);
+		TopDocs docs = searchHelper.queryIndex(booleanQuery, 1);
 		
-		if(docs.scoreDocs.length > 0)
-		{
-			Document document = getDocument(docs.scoreDocs[0].doc);
+		if(docs.scoreDocs.length > 0) {
+			Document document = searchHelper.getDocument(docs.scoreDocs[0].doc);
 			IndexableField[] fields = document.getFields(Constants.BUSINESS_NAME);
 			return fields[0].stringValue();	
 		}
 		
 		else return "";
-		
 	}
 
-	public Document getBusinessDocument(String businessId)
-	{
+	public Document getBusinessDocument(String businessId) {
 	        
 		Query typeQuery = createFieldQuery(Constants.TYPE, Constants.BUSINESS);
 	    Query businessQuery = createFieldQuery(Constants.BUSINESS_ID, businessId);
@@ -309,125 +159,20 @@ public class SearchFromLucene {
 	    booleanQuery.add(typeQuery, Occur.MUST);
 	    booleanQuery.add(businessQuery, Occur.MUST);
 	        
-	    TopDocs docs = searchIndex(booleanQuery, 1);
+	    TopDocs docs = searchHelper.queryIndex(booleanQuery, 1);
 	        
-	    if(docs.scoreDocs.length > 0)
-	    {
-	    	return getDocument(docs.scoreDocs[0].doc);
+	    if(docs.scoreDocs.length > 0) {
+	    	return searchHelper.getDocument(docs.scoreDocs[0].doc);
 	    }
 	    
 	    else return null;
-	        
 	}
 
-	//---------------------------------------- TF-IDF OLD -------- REPLACE AFTER TESTING NEW CODE
-	
-	   public PriorityQueue<DS> getVocabWithFreqForReview()
-		{
-			
-			HashMap<String, Integer> termWordCount = new HashMap<>();
-			
-			HashMap<String, HashMap<Integer,Integer>> termDocWordCount = new HashMap<>();
-			
-			int totalNoOfDocs = getTotalDocumentCount();
-			
-			HashMap<String, Double> IDFScores = new HashMap<>();
-			
-			
-			for (int i = 0; i < this.indexReader.maxDoc(); i++) 
-			{
-				try {
-					
-					Terms terms = indexReader.getTermVector(i, Constants.REVIEW_TEXT);
+    public long getDocumentCount(){return searchHelper.getTotalDocumentCount();}
 
-					if (terms != null && terms.size() > 0) {
-						
-						TermsEnum termsEnum = terms.iterator(null);
-					    BytesRef term = null;
-					    
-					    while ((term = termsEnum.next()) != null) 
-					    {
-					    	DocsEnum docsEnum = termsEnum.docs(null, null);
-					    	
-					    	HashMap<Integer,Integer> tempDocFreqMap = new HashMap<>();
-					    	
-							int docIdEnum;
-					        while ((docIdEnum = docsEnum.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) 
-					        {
-					          
-					          if(!termWordCount.containsKey(term.utf8ToString()))
-					        	  termWordCount.put(term.utf8ToString(), docsEnum.freq());
-					          else
-					        	  termWordCount.put(term.utf8ToString(), termWordCount.get(term.utf8ToString()) + docsEnum.freq());
+    public Terms getDocumentVocab(int docId, String field){return searchHelper.getDocumentVocab(docId, field);}
 
-					          tempDocFreqMap.put(docIdEnum, docsEnum.freq());
-					          
-					        
-					        }
-					        termDocWordCount.put(term.utf8ToString(), tempDocFreqMap);
-					        
-					        if (!IDFScores.containsKey(term.utf8ToString()))
-					            IDFScores.put(term.utf8ToString(), (double)totalNoOfDocs / termsEnum.docFreq());
-					    }
-
-					}
-					
-				
-				} catch (IOException e) {
-	             e.printStackTrace();
-				}
-					
-			}
-			
-			HashMap<String, Double> TFIDFScores = new HashMap<>();
-			
-	        for(String term : termDocWordCount.keySet())
-	        {
-	            double docLength = 0;
-	            double TFIDFScore = 0;
-	            
-	            for(Integer docID : termDocWordCount.get(term).keySet())
-	            {
-	                for (String docTerm : termDocWordCount.keySet())
-	                {
-	                    if (termDocWordCount.get(docTerm).containsKey(docID))
-	                        docLength += termDocWordCount.get(docTerm).get(docID);
-	                }
-	                
-	                int termFreq = termDocWordCount.get(term).get(docID);
-	                double TFScore = termFreq/docLength;
-	                TFIDFScore += TFScore;
-	            }
-	            int numOfDocs = termDocWordCount.get(term).size();
-	            double avgTFScore = TFIDFScore / numOfDocs;
-	            
-	            TFIDFScores.put(term, avgTFScore * IDFScores.get(term));
-	        }
-			
-			
-			PriorityQueue<DS> fpq = new PriorityQueue<>();
-			
-			for(String word : TFIDFScores.keySet())
-			{
-				double score = TFIDFScores.get(word);
-				DS tds = new DS(word,score);
-				fpq.add(tds);
-			}
-			
-			return fpq;	
-		}   
-	
-	@Override
-    protected void finalize()
-	{
-		try {
-			
-			indexReader.close();
-		
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	
-	}
-
+    public TermsEnum getTermsEnumForField(String field) throws IOException {
+        return searchHelper.getTermsEnumForField(field);
+    }
 }

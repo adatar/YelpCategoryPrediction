@@ -22,36 +22,15 @@ public class ProcessReviewsWithBusiness {
 		indexUsingLucene = new IndexUsingLucene(trainIndexPath, testIndexPath);
 		this.openLocation(reviewFile, businessFile);
 	}
-	
-	public void setIndexUsingLucene(IndexUsingLucene indexUsingLucene) {
-        this.indexUsingLucene = indexUsingLucene;
-    }
 
-	public void addPrediction(HashMap<String, String> predictionValuesMapPairs)
-	{
-	    this.indexUsingLucene.indexPrediction(predictionValuesMapPairs);
-	}
-	
-	public void closeLuceneLocks()
-	{
-	    this.indexUsingLucene.closeLuceneLocks();
-	}
-	
-	public void commitLuceneIndex()
-	{
-	    this.indexUsingLucene.commitLuceneIndex();
-	}
-	
-    protected HashMap<String,String> parseReviewJson(String reviewJsonLine)
+	protected HashMap<String,String> parseReviewJson(String reviewJsonLine)
 	{
 		JSONObject jsonObject = new JSONObject(reviewJsonLine);
 		
 		String businessId = jsonObject.getString(Constants.BUSINESS_ID);
 		String text = jsonObject.getString(Constants.TEXT);
 		
-
 		HashMap<String,String> reviewFieldValuePairs = new HashMap<>();
-		
 		reviewFieldValuePairs.put(Constants.BUSINESS_ID, businessId);
 		reviewFieldValuePairs.put(Constants.TEXT, text);
 		
@@ -64,14 +43,12 @@ public class ProcessReviewsWithBusiness {
 		
 		JSONObject jsonObject = new JSONObject(businessJsonLine);
 		
-		
 		String businessId = jsonObject.getString(Constants.BUSINESS_ID);
 		String name = jsonObject.getString(Constants.NAME);
 		double stars = jsonObject.getInt(Constants.STARS);
 		JSONArray categoriesArray = jsonObject.getJSONArray(Constants.CATEGORIES);
 		
 		String categories = "";
-		
 		for(int i = 0; i< categoriesArray.length() -1 ; i++)
 			categories = categories + categoriesArray.getString(i) + ", ";	
 		
@@ -80,10 +57,7 @@ public class ProcessReviewsWithBusiness {
 		
 		HashMap<String,String> businessFieldValuePairs = new HashMap<>();
 		
-		if(isRestaurant(categoriesArray))
-			businessFieldValuePairs.put(Constants.IS_RESTAURANT, Constants.TRUE);
-		
-		
+		if(isRestaurant(categoriesArray)) businessFieldValuePairs.put(Constants.IS_RESTAURANT, Constants.TRUE);
 		businessFieldValuePairs.put(Constants.BUSINESS_ID, businessId);
 		businessFieldValuePairs.put(Constants.BUSINESS_NAME, name);
 		businessFieldValuePairs.put(Constants.BUSINESS_RATING, new Double(stars).toString());
@@ -171,6 +145,16 @@ public class ProcessReviewsWithBusiness {
 		return false;
 	}
 
+    public void closeLuceneLocks()
+    {
+        this.indexUsingLucene.closeLuceneLocks();
+    }
+
+    public void commitLuceneIndex()
+    {
+        this.indexUsingLucene.commitLuceneIndex();
+    }
+
 	public void openLocation(String reviewFile, String businessFile)	
 	{
 		try
@@ -185,5 +169,10 @@ public class ProcessReviewsWithBusiness {
 		}
 		System.out.println("OPENED");
 	}
+
+    public void addPrediction(HashMap<String, String> predictionValuesMapPairs)
+    {
+        this.indexUsingLucene.indexPrediction(predictionValuesMapPairs);
+    }
 
 }

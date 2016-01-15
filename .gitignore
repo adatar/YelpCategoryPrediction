@@ -7,3 +7,5 @@ trainingIndex/
 testIndex/
 .settings/
 target/
+*.iml
+*.project

@@ -100,12 +100,12 @@ public class CalculateTFIDF {
 	private HashMap<String, Double> calculateIDFScores(){
 		
 		HashMap<String, Double> IDFScoreMap = new HashMap<>();
-		long totalDocuments = searchFromLucene.getTotalDocumentCount();
+		long totalDocuments = searchFromLucene.getDocumentCount();
 		
 		for(String word : reviewVocabulary){
 			
 			double termDocCount = searchFromLucene.getDocumentCountContainingWord(word) * 1.0;
-			double idfScore = (totalDocuments/termDocCount);
+			double idfScore = Math.log(totalDocuments/termDocCount);
 			
 			IDFScoreMap.put(word, idfScore);
 		}
